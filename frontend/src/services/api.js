@@ -4,14 +4,21 @@ const getBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  const host = window.location.hostname || 'localhost';
-  return `http://${host}:5000`;
+  // In local browser development (localhost / 127.0.0.1)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+  }
+  // For Vercel production deployment, mobile users, and custom domains
+  return '';
 };
 
 const API_URL = getBaseUrl();
 
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: API_URL ? `${API_URL}/api` : '/api',
 });
 
 // Auto-attach JWT token

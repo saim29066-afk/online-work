@@ -15,7 +15,6 @@ const getReferralData = async (req, res) => {
           select: {
             id: true,
             name: true,
-            phone: true,
             createdAt: true,
             totalDeposited: true,
             investments: {
@@ -33,7 +32,7 @@ const getReferralData = async (req, res) => {
         referralEarningsEarned: {
           include: {
             referredUser: {
-              select: { name: true, phone: true }
+              select: { name: true }
             }
           },
           orderBy: { createdAt: 'desc' }

@@ -179,7 +179,6 @@ const Referrals = () => {
               <thead>
                 <tr className="border-b border-slate-200 text-slate-600 font-bold">
                   <th className="pb-2">Student Name</th>
-                  <th className="pb-2">Phone</th>
                   <th className="pb-2">Joined Date</th>
                   <th className="pb-2 text-right">Plan Status</th>
                 </tr>
@@ -190,9 +189,6 @@ const Referrals = () => {
                   return (
                     <tr key={ref.id} className="text-slate-700">
                       <td className="py-2.5 font-bold text-slate-900">{ref.name}</td>
-                      <td className="py-2.5 text-slate-600 font-mono text-[11px]">
-                        {ref.phone ? ref.phone.slice(0, 4) + '****' + ref.phone.slice(-3) : 'N/A'}
-                      </td>
                       <td className="py-2.5 text-slate-500 text-[11px]">
                         {new Date(ref.createdAt).toLocaleDateString()}
                       </td>

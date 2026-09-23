@@ -177,7 +177,7 @@ const Register = () => {
 
             <div>
               <label className="block font-bold text-slate-700 mb-1">
-                Referral Code or Friend Mobile <span className="text-slate-400 font-normal">(Optional)</span>
+                Referral Code <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -185,7 +185,7 @@ const Register = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="e.g. STUWDGJH or 03335114728"
+                  placeholder="e.g. STU98XYZ (Optional)"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value.trim().toUpperCase())}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-mono uppercase focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
