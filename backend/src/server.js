@@ -8,8 +8,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security: Disable X-Powered-By header to prevent technology footprinting
+// Trust proxy for Vercel / Cloud deployment
+app.set('trust proxy', 1);
+
+// Security: Disable X-Powered-By header
 app.disable('x-powered-by');
+
+// 1. CORS first before any other middleware or routes
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 const {
   globalLimiter,
@@ -20,28 +30,19 @@ const {
   strictSecurityHeaders
 } = require('./middleware/securityMiddleware');
 
-// Security & Privacy Headers Middleware (Completely blocks Camera, Mic, Geolocation, Sensors & Tracking)
+// 2. Security Headers & Shield
 app.use(strictSecurityHeaders);
-
-// Bot, Exploit & Hacker Scanner Shield
 app.use(botAndExploitShield);
 
-// Global Anti-DDoS / Flooding Rate Limiter
-app.use('/api', globalLimiter);
-
-// Input Sanitization against XSS & Payload Injections
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+// 3. Body parsers & Sanitization
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeAndProtect);
 
-// Middleware
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// 4. Rate limiters
+app.use('/api', globalLimiter);
 
-// Serve static uploads for payment screenshots with explicit cross-origin policy
+// 5. Serve static uploads for payment screenshots
 app.use('/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,7 +50,7 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(path.join(__dirname, '../uploads')));
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
-// Routes with specialized protection
+// 6. Routes
 app.use('/api/auth', authLimiter, require('./routes/authRoutes'));
 app.use('/api/plans', require('./routes/planRoutes'));
 app.use('/api/transactions', transactionLimiter, require('./routes/transactionRoutes'));
@@ -57,16 +58,16 @@ app.use('/api/referrals', require('./routes/referralRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/support', require('./routes/supportRoutes'));
 
-// Health check (Sanitized - no internal infrastructure leak)
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    message: 'Protected API Gateway Operational',
+    message: 'API Gateway Operational',
     timestamp: new Date().toISOString()
   });
 });
 
-// Error handling middleware (Safe, sanitized)
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('[Error Handler]:', err.message);
   res.status(err.status || 500).json({

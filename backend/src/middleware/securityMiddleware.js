@@ -3,84 +3,86 @@ const rateLimit = require('express-rate-limit');
 // 1. GLOBAL API RATE LIMITER (DDoS & Flooding Shield)
 const globalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 200, // Limit each IP to 200 requests per window
+  max: 1000, // Allow up to 1000 requests per minute
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'High traffic detected from your IP. Please slow down your requests.'
+    message: 'High traffic detected. Please slow down your requests.'
   }
 });
 
-// 2. AUTH RATE LIMITER (Anti-Brute Force & Credential Stuffing Shield)
+// 2. AUTH RATE LIMITER (Generous for multi-user mobile testing)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Max 20 attempts per 15 minutes
+  max: 500, // Generous limit so mobile users on shared networks never get blocked
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many login/registration attempts from this IP. Please try again after 15 minutes.'
+    message: 'Too many authentication attempts. Please try again in a few minutes.'
   }
 });
 
-// 3. TRANSACTION RATE LIMITER (Anti-Spam Financial Shield)
+// 3. TRANSACTION RATE LIMITER
 const transactionLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 15,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many financial requests submitted in a short period. Please wait a few minutes.'
+    message: 'Too many transactions submitted in a short period. Please wait a moment.'
   }
 });
 
-// 4. SANITIZATION: Recursive input cleaner against XSS and Injection payloads
-const sanitizeValue = (val) => {
+// 4. SANITIZATION: Recursive input cleaner that NEVER corrupts passwords
+const SENSITIVE_KEYS = ['password', 'confirmPassword', 'currentPassword', 'newPassword', 'token'];
+
+const sanitizeValue = (val, key = '') => {
+  if (SENSITIVE_KEYS.includes(key)) {
+    return val; // Never alter passwords
+  }
   if (typeof val === 'string') {
-    // Remove script tags, javascript: protocols, dangerous onerror/onload injection patterns
     return val
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/javascript:/gi, '')
-      .replace(/on\w+\s*=/gi, '')
       .trim();
   }
   if (Array.isArray(val)) {
-    return val.map(sanitizeValue);
+    return val.map((v) => sanitizeValue(v, key));
   }
   if (val !== null && typeof val === 'object') {
     const cleanObj = {};
-    for (const key of Object.keys(val)) {
-      // Prevent prototype pollution
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
-      cleanObj[key] = sanitizeValue(val[key]);
+    for (const k of Object.keys(val)) {
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+      cleanObj[k] = sanitizeValue(val[k], k);
     }
     return cleanObj;
   }
   return val;
 };
 
-// 5. INPUT SANITIZATION & HPP (HTTP Parameter Pollution) MIDDLEWARE
+// 5. INPUT SANITIZATION MIDDLEWARE
 const sanitizeAndProtect = (req, res, next) => {
-  if (req.body) {
+  if (req.body && typeof req.body === 'object') {
     req.body = sanitizeValue(req.body);
   }
-  if (req.query) {
+  if (req.query && typeof req.query === 'object') {
     req.query = sanitizeValue(req.query);
   }
-  if (req.params) {
+  if (req.params && typeof req.params === 'object') {
     req.params = sanitizeValue(req.params);
   }
   next();
 };
 
-// 6. BOT & EXPLOIT SHIELD: Blocks vulnerability scanners, path traversal & probes
+// 6. BOT & EXPLOIT SHIELD
 const botAndExploitShield = (req, res, next) => {
   const userAgent = (req.headers['user-agent'] || '').toLowerCase();
   const url = req.url.toLowerCase();
 
-  // Block known hacker scanners & bot user agents
+  // Block known automated attack scanners
   const blockedAgents = ['sqlmap', 'nikto', 'dirbuster', 'gobuster', 'masscan', 'wpscan', 'nmap', 'havij', 'acunetix'];
   if (blockedAgents.some(agent => userAgent.includes(agent))) {
     return res.status(403).json({ success: false, message: 'Access Denied by Security Shield.' });
@@ -88,18 +90,16 @@ const botAndExploitShield = (req, res, next) => {
 
   // Block path traversal and sensitive file probes
   const suspiciousPatterns = [
-    '..',
-    '.env',
-    '.git',
-    '.svn',
-    '.aws',
-    '.ssh',
-    'wp-admin',
-    'wp-login',
-    'phpmyadmin',
-    'xmlrpc',
-    'cgi-bin',
-    'eval(',
+    '/.env',
+    '/.git',
+    '/.svn',
+    '/.aws',
+    '/.ssh',
+    '/wp-admin',
+    '/wp-login',
+    '/phpmyadmin',
+    '/xmlrpc.php',
+    '/cgi-bin/',
     '/etc/passwd',
     'cmd.exe'
   ];
@@ -111,9 +111,8 @@ const botAndExploitShield = (req, res, next) => {
   next();
 };
 
-// 7. ENTERPRISE PERMISSIONS & PRIVACY HARDENING HEADERS
+// 7. PERMISSIONS & SECURITY HEADERS
 const strictSecurityHeaders = (req, res, next) => {
-  // Completely disable any access to camera, mic, location, sensors, bluetooth, usb, payment, etc.
   const permissionsPolicy = [
     'geolocation=()',
     'camera=()',
@@ -123,21 +122,7 @@ const strictSecurityHeaders = (req, res, next) => {
     'magnetometer=()',
     'accelerometer=()',
     'gyroscope=()',
-    'ambient-light-sensor=()',
-    'autoplay=()',
-    'battery=()',
-    'display-capture=()',
-    'document-domain=()',
-    'encrypted-media=()',
-    'execution-while-not-rendered=()',
-    'execution-while-out-of-viewport=()',
-    'fullscreen=(self)',
-    'gamepad=()',
-    'midi=()',
-    'screen-wake-lock=()',
-    'speaker-selection=()',
-    'web-share=()',
-    'xr-spatial-tracking=()'
+    'ambient-light-sensor=()'
   ].join(', ');
 
   res.setHeader('Permissions-Policy', permissionsPolicy);
@@ -148,11 +133,8 @@ const strictSecurityHeaders = (req, res, next) => {
   res.setHeader('Server', 'Protected-Edge-Network');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   
-  // Anti-caching for sensitive API data
   if (req.path.startsWith('/api/')) {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   }
 
   next();

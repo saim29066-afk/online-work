@@ -146,12 +146,14 @@ const login = async (req, res) => {
     }
 
     const cleanInput = phoneOrEmail.trim();
+    const cleanPhone = cleanInput.replace(/\D/g, '');
 
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { phone: cleanInput },
-          { email: cleanInput.toLowerCase() }
+          { email: cleanInput.toLowerCase() },
+          ...(cleanPhone ? [{ phone: cleanPhone }] : [{ phone: cleanInput }]),
+          ...(cleanInput.toLowerCase() === 'admin' ? [{ email: 'admin@studentinvest.pk' }] : [])
         ]
       }
     });
