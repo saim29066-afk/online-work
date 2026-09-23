@@ -1,0 +1,11 @@
+# Dependencies (Do not push heavy libraries to GitHub)
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build and Temp files
+dist/
+frontend/dist/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: pan-x pan-y;
+    color: #0f172a;
+    height: 100%;
+  }
+  body {
+    @apply bg-white text-slate-900 min-h-screen antialiased overflow-x-hidden selection:bg-emerald-200 selection:text-emerald-950 font-sans;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    color: #0f172a;
+  }
+  #root {
+    touch-action: pan-x pan-y;
+    min-height: 100vh;
+  }
+  p, span, label, input, button, table {
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Prevent iOS Safari from zooming when focusing inputs */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  @media (min-width: 640px) {
+    input, select, textarea {
+      font-size: 0.875rem !important; /* text-sm on desktop */
+    }
+  }
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Crisp Clean High-Contrast Cards */
+.glass-panel {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.glass-card {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.glass-card-hover {
+  transition: all 0.15s ease-in-out;
+}
+.glass-card-hover:hover {
+  border-color: #059669;
+  box-shadow: 0 4px 8px -1px rgba(5, 150, 105, 0.12);
+}
+
+/* Mobile safe area for iOS */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+/* Continuous 24/7 Infinite Seamless Marquee Animation */
+@keyframes infiniteMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-infinite-ticker {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: infiniteMarquee 90s linear infinite;
+  pointer-events: none;
+  user-select: none;
+}

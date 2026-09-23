@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(uuid())
+  name              String
+  email             String?          @unique
+  phone             String           @unique
+  password          String
+  role              String           @default("USER") // USER or ADMIN
+  balance           Float            @default(0.0)
+  totalDeposited    Float            @default(0.0)
+  totalWithdrawn    Float            @default(0.0)
+  totalEarned       Float            @default(0.0)
+  referralCode      String           @unique
+  referredById      String?
+  referredBy        User?            @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals         User[]           @relation("UserReferrals")
+  
+  // Account Restriction & Violation Security
+  isRestricted      Boolean          @default(false)
+  restrictionReason String?
+  
+  investments       UserInvestment[]
+  deposits          Deposit[]
+  withdrawals       Withdrawal[]
+  referralEarningsEarned ReferralEarning[] @relation("ReferrerEarnings")
+  referralEarningsFrom   ReferralEarning[] @relation("ReferredEarnings")
+  supportTickets    SupportTicket[]
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Plan {
+  id                  Int              @id @default(autoincrement())
+  name                String
+  price               Float
+  dailyBonus          Float
+  durationDays        Int              @default(30)
+  referralBonusPercent Float           @default(50.0) // 50% commission for referrer
+  badge               String?          @default("Popular")
+  description         String?
+  features            String           // JSON string array of features
+  isActive            Boolean          @default(true)
+  investments         UserInvestment[]
+  createdAt           DateTime         @default(now())
+}
+
+model UserInvestment {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId        Int
+  plan          Plan      @relation(fields: [planId], references: [id])
+  amount        Float
+  dailyBonus    Float
+  durationDays  Int
+  daysClaimed   Int       @default(0)
+  lastClaimedAt DateTime?
+  status        String    @default("ACTIVE") // ACTIVE, COMPLETED
+  createdAt     DateTime  @default(now())
+}
+
+model Deposit {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gateway       String   // "EASYPAISA" or "JAZZCASH"
+  amount        Float
+  senderNumber  String
+  senderName    String
+  transactionId String
+  screenshotUrl String
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNote     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Withdrawal {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gateway       String   // "EASYPAISA" or "JAZZCASH"
+  amount        Float
+  accountNumber String
+  accountTitle  String
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNote     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ReferralEarning {
+  id              String   @id @default(uuid())
+  referrerId      String
+  referrer        User     @relation("ReferrerEarnings", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId  String
+  referredUser    User     @relation("ReferredEarnings", fields: [referredUserId], references: [id], onDelete: Cascade)
+  planName        String
+  planPrice       Float
+  amount          Float
+  createdAt       DateTime @default(now())
+}
+
+model PaymentSetting {
+  id                    Int      @id @default(1)
+  easypaisaNumber       String   @default("03451234567")
+  easypaisaTitle        String   @default("Muhammad Ali (Admin)")
+  jazzcashNumber        String   @default("03019876543")
+  jazzcashTitle         String   @default("Muhammad Ali (Admin)")
+  minWithdrawal         Float    @default(800.0)
+  minInvitesForWithdraw Int      @default(2)
+  supportWhatsapp       String   @default("+923451234567")
+  supportEmail          String   @default("support@studentinvest.pk")
+  noticeText            String   @default("🎉 Welcome Students! Rs. 250 Free Bonus on registration + 50% referral bonus available!")
+  updatedAt             DateTime @updatedAt
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String
+  message   String
+  reply     String?
+  status    String   @default("OPEN") // OPEN, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

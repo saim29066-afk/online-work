@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
+    <meta name="referrer" content="no-referrer" />
+    <!-- Enterprise Strict Permissions Policy: Hardware, Device, Sensors & Location Total Lockout -->
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=(), ambient-light-sensor=(), autoplay=(), battery=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(self), gamepad=(), midi=(), screen-wake-lock=(), speaker-selection=(), web-share=(), xr-spatial-tracking=()" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Student Invest Hub - Daily Returns & 50% Referral Commission</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310B981'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+  </head>
+  <body class="bg-white text-slate-900 font-['Plus_Jakarta_Sans',sans-serif] antialiased selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden select-none">
+    <script>
+      (function() {
+        'use strict';
+
+        // 1. HARDWARE ZERO-TRUST: Geolocation Lockout
+        if (typeof navigator !== 'undefined') {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition = function(s, e) {
+              if (e) e({ code: 1, message: 'Access Denied: Geolocation is permanently disabled.' });
+            };
+            navigator.geolocation.watchPosition = function(s, e) {
+              if (e) e({ code: 1, message: 'Access Denied: Geolocation is permanently disabled.' });
+              return 0;
+            };
+          }
+
+          // 2. HARDWARE ZERO-TRUST: Camera & Microphone Lockout
+          if (navigator.mediaDevices) {
+            navigator.mediaDevices.getUserMedia = function() {
+              return Promise.reject(new DOMException('Access Denied: Camera and Microphone access is blocked.', 'NotAllowedError'));
+            };
+            navigator.mediaDevices.enumerateDevices = function() {
+              return Promise.resolve([]);
+            };
+          }
+
+          // 3. HARDWARE ZERO-TRUST: Permissions Query Lockout
+          if (navigator.permissions && navigator.permissions.query) {
+            const originalQuery = navigator.permissions.query.bind(navigator.permissions);
+            navigator.permissions.query = function(params) {
+              if (['geolocation', 'camera', 'microphone', 'notifications', 'midi', 'magnetometer', 'accelerometer', 'gyroscope'].includes(params.name)) {
+                return Promise.resolve({ state: 'denied', onchange: null });
+              }
+              return originalQuery(params);
+            };
+          }
+
+          // 4. PRIVACY: Block Battery, Bluetooth, USB, Network Information probing
+          if (navigator.getBattery) {
+            navigator.getBattery = function() {
+              return Promise.reject(new Error('Battery API blocked.'));
+            };
+          }
+          if (navigator.connection) {
+            try {
+              Object.defineProperty(navigator, 'connection', { get: () => undefined });
+            } catch (_) {}
+          }
+        }
+
+        // 5. ANTI-IP-LEAK: Neutralize WebRTC IP probing channels
+        if (typeof window !== 'undefined') {
+          window.RTCPeerConnection = undefined;
+          window.webkitRTCPeerConnection = undefined;
+          window.mozRTCPeerConnection = undefined;
+          window.DeviceOrientationEvent = undefined;
+          window.DeviceMotionEvent = undefined;
+
+          // 6. ANTI-FINGERPRINTING: Neutralize Canvas & AudioContext fingerprint extractors
+          try {
+            if (window.HTMLCanvasElement) {
+              const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+              HTMLCanvasElement.prototype.toDataURL = function(type) {
+                if (this.width === 0 || this.height === 0) return '';
+                return origToDataURL.apply(this, arguments);
+              };
+            }
+            if (window.AudioContext || window.webkitAudioContext) {
+              window.AudioContext = undefined;
+              window.webkitAudioContext = undefined;
+            }
+          } catch (_) {}
+
+          // 7. ANTI-INSPECTION & CODE LOCK: Disable Context Menu & DevTools Hotkeys
+          document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+          }, { passive: false });
+
+          document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.key === 'F12' || e.keyCode === 123) {
+              e.preventDefault();
+              return false;
+            }
+            // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S
+            if (e.ctrlKey || e.metaKey) {
+              if (
+                e.key === 'u' || e.key === 'U' || e.keyCode === 85 ||
+                e.key === 's' || e.key === 'S' || e.keyCode === 83 ||
+                (e.shiftKey && (
+                  e.key === 'i' || e.key === 'I' || e.keyCode === 73 ||
+                  e.key === 'j' || e.key === 'J' || e.keyCode === 74 ||
+                  e.key === 'c' || e.key === 'C' || e.keyCode === 67
+                ))
+              ) {
+                e.preventDefault();
+                return false;
+              }
+            }
+          }, { passive: false });
+        }
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
