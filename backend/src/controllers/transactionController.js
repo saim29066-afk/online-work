@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 // @desc Get payment gateway info
 // @route GET /api/transactions/gateway-info

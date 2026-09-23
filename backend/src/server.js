@@ -50,13 +50,20 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(path.join(__dirname, '../uploads')));
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
-// 6. Routes
-app.use('/api/auth', authLimiter, require('./routes/authRoutes'));
-app.use('/api/plans', require('./routes/planRoutes'));
-app.use('/api/transactions', transactionLimiter, require('./routes/transactionRoutes'));
-app.use('/api/referrals', require('./routes/referralRoutes'));
-app.use('/api/admin', require('./routes/adminRoutes'));
-app.use('/api/support', require('./routes/supportRoutes'));
+// 6. Universal Dual-Mounted Routes
+const authRoutes = require('./routes/authRoutes');
+const planRoutes = require('./routes/planRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+const referralRoutes = require('./routes/referralRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const supportRoutes = require('./routes/supportRoutes');
+
+app.use(['/api/auth', '/auth'], authLimiter, authRoutes);
+app.use(['/api/plans', '/plans'], planRoutes);
+app.use(['/api/transactions', '/transactions'], transactionLimiter, transactionRoutes);
+app.use(['/api/referrals', '/referrals'], referralRoutes);
+app.use(['/api/admin', '/admin'], adminRoutes);
+app.use(['/api/support', '/support'], supportRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

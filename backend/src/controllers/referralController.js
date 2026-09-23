@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 // @desc Get current user referral dashboard & invited list
 // @route GET /api/referrals
