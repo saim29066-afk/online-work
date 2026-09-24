@@ -15,7 +15,8 @@ import {
   Loader2,
   Smartphone,
   ShieldCheck,
-  History
+  History,
+  X
 } from 'lucide-react';
 
 const Deposit = () => {
