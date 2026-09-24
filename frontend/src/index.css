@@ -9,12 +9,20 @@
     touch-action: pan-x pan-y;
     color: #0f172a;
     height: 100%;
+    font-size: 16px;
+  }
+  @media (max-width: 640px) {
+    html {
+      font-size: 17px; /* Increased base scale for mobile devices */
+    }
   }
   body {
     @apply bg-white text-slate-900 min-h-screen antialiased overflow-x-hidden selection:bg-emerald-200 selection:text-emerald-950 font-sans;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     color: #0f172a;
+    font-size: 1rem;
+    line-height: 1.5;
   }
   #root {
     touch-action: pan-x pan-y;
@@ -23,14 +31,53 @@
   p, span, label, input, button, table {
     -webkit-font-smoothing: antialiased;
   }
-  /* Prevent iOS Safari from zooming when focusing inputs */
+  /* Ensure comfortable input reading and touch on mobile */
   input, select, textarea {
     font-size: 16px !important;
   }
-  @media (min-width: 640px) {
-    input, select, textarea {
-      font-size: 0.875rem !important; /* text-sm on desktop */
-    }
+}
+
+/* Mobile typography scale enhancements */
+@media (max-width: 640px) {
+  .text-\[10px\] {
+    font-size: 12px !important;
+    line-height: 1.25rem !important;
+  }
+  .text-\[11px\] {
+    font-size: 13px !important;
+    line-height: 1.3rem !important;
+  }
+  .text-xs {
+    font-size: 14px !important;
+    line-height: 1.35rem !important;
+  }
+  .text-sm {
+    font-size: 15.5px !important;
+    line-height: 1.45rem !important;
+  }
+  .text-base {
+    font-size: 17px !important;
+    line-height: 1.5rem !important;
+  }
+  .text-lg {
+    font-size: 19px !important;
+    line-height: 1.6rem !important;
+  }
+  .text-xl {
+    font-size: 22px !important;
+    line-height: 1.65rem !important;
+  }
+  .text-2xl {
+    font-size: 26px !important;
+    line-height: 1.75rem !important;
+  }
+  .text-3xl {
+    font-size: 30px !important;
+    line-height: 2rem !important;
+  }
+  /* Comfortable Mobile Touch Target Sizes */
+  button:not(.text-only) {
+    min-height: 42px;
   }
 }
 
