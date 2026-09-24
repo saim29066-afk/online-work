@@ -64,6 +64,27 @@ const submitDeposit = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Minimum deposit amount is Rs. 100' });
     }
 
+    const settings = await prisma.paymentSetting.findFirst();
+    const gw = gateway.toUpperCase();
+    if (gw === 'EASYPAISA' && settings?.easypaisaStatus && settings.easypaisaStatus !== 'ACTIVE') {
+      return res.status(400).json({
+        success: false,
+        message: settings.easypaisaNotice || 'EasyPaisa is currently under maintenance / coming soon. Please use another gateway.'
+      });
+    }
+    if ((gw === 'JAZZCASH' || gw === 'JAZZ_CASH') && settings?.jazzcashStatus && settings.jazzcashStatus !== 'ACTIVE') {
+      return res.status(400).json({
+        success: false,
+        message: settings.jazzcashNotice || 'JazzCash is currently under maintenance / coming soon. Please use another gateway.'
+      });
+    }
+    if (gw === 'UPAISA' && settings?.upaisaStatus && settings.upaisaStatus !== 'ACTIVE') {
+      return res.status(400).json({
+        success: false,
+        message: settings.upaisaNotice || 'UPaisa is currently under maintenance / coming soon. Please use another gateway.'
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         success: false,

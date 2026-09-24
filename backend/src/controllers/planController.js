@@ -139,10 +139,30 @@ const buyPlan = async (req, res) => {
         });
 
         if (referrer && !referrer.isRestricted) {
-          const bonusPercent = (plan.referralBonusPercent !== undefined && plan.referralBonusPercent !== null && plan.referralBonusPercent > 0)
-            ? plan.referralBonusPercent
-            : 50.0;
-          const bonusAmount = (plan.price * (bonusPercent / 100)); // 50% commission
+          // Dynamic Referral Tier Ladder:
+          // 1st referral reward: 50%
+          // 2nd referral reward: 40%
+          // 3rd referral reward: 30%
+          // 4th referral reward: 20%
+          // 5th+ and all future referral rewards: 10%
+          const previousEarningsCount = await tx.referralEarning.count({
+            where: { referrerId: referrer.id }
+          });
+
+          let bonusPercent = 50.0;
+          if (previousEarningsCount === 0) {
+            bonusPercent = 50.0;
+          } else if (previousEarningsCount === 1) {
+            bonusPercent = 40.0;
+          } else if (previousEarningsCount === 2) {
+            bonusPercent = 30.0;
+          } else if (previousEarningsCount === 3) {
+            bonusPercent = 20.0;
+          } else {
+            bonusPercent = 10.0; // 5th referral and all future ones stay at 10%
+          }
+
+          const bonusAmount = (plan.price * (bonusPercent / 100));
 
           // Credit referrer balance and totalEarned
           await tx.user.update({
@@ -158,13 +178,13 @@ const buyPlan = async (req, res) => {
             data: {
               referrerId: user.referredById,
               referredUserId: user.id,
-              planName: plan.name,
+              planName: `${plan.name} (${bonusPercent}% Bonus)`,
               planPrice: plan.price,
               amount: bonusAmount
             }
           });
 
-          console.log(`[REFERRAL BONUS] Credited Rs. ${bonusAmount} to referrer ${referrer.name} (${referrer.phone}) for friend ${user.name}'s ${plan.name} purchase`);
+          console.log(`[REFERRAL BONUS ${bonusPercent}%] Credited Rs. ${bonusAmount} to referrer ${referrer.name} for friend ${user.name}'s ${plan.name} purchase (Tier count: ${previousEarningsCount + 1})`);
         } else {
           console.log(`[REFERRAL BONUS SKIPPED] Referrer is restricted or inactive.`);
         }

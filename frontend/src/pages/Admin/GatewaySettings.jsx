@@ -18,10 +18,16 @@ const GatewaySettings = () => {
   const [formData, setFormData] = useState({
     easypaisaNumber: '',
     easypaisaTitle: '',
+    easypaisaStatus: 'ACTIVE',
+    easypaisaNotice: '',
     jazzcashNumber: '',
     jazzcashTitle: '',
+    jazzcashStatus: 'ACTIVE',
+    jazzcashNotice: '',
     upaisaNumber: '',
     upaisaTitle: '',
+    upaisaStatus: 'ACTIVE',
+    upaisaNotice: '',
     minWithdrawal: 800,
     minInvitesForWithdraw: 1,
     supportWhatsapp: '',
@@ -36,7 +42,13 @@ const GatewaySettings = () => {
     try {
       const res = await api.get('/transactions/gateway-info');
       if (res.data.success && res.data.settings) {
-        setFormData(res.data.settings);
+        setFormData((prev) => ({
+          ...prev,
+          ...res.data.settings,
+          easypaisaStatus: res.data.settings.easypaisaStatus || 'ACTIVE',
+          jazzcashStatus: res.data.settings.jazzcashStatus || 'ACTIVE',
+          upaisaStatus: res.data.settings.upaisaStatus || 'ACTIVE'
+        }));
       }
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -108,7 +120,7 @@ const GatewaySettings = () => {
           Payment Gateways & System Rules
         </h1>
         <p className="text-[11px] text-slate-600 mt-0.5 font-medium">
-          Update your EasyPaisa, JazzCash & UPaisa receiver numbers, withdrawal rules, and announcements in real time.
+          Update receiver numbers, gateway status (Active / Under Maintenance / Coming Soon), and announcements in real time.
         </p>
       </div>
 
@@ -133,9 +145,25 @@ const GatewaySettings = () => {
       <form onSubmit={handleSubmit} className="space-y-3 text-xs">
         {/* EasyPaisa Settings */}
         <div className="p-3 sm:p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-2.5 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
-            <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
-            <h3>EasyPaisa Receiving Account</h3>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
+              <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+              <h3>EasyPaisa Receiving Account</h3>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <label className="font-bold text-slate-700 text-[11px]">Status:</label>
+              <select
+                name="easypaisaStatus"
+                value={formData.easypaisaStatus || 'ACTIVE'}
+                onChange={handleChange}
+                className="px-2.5 py-1 rounded-lg bg-white border border-emerald-300 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600"
+              >
+                <option value="ACTIVE">🟢 Active (Working)</option>
+                <option value="UNDER_MAINTENANCE">🛠️ Under Maintenance</option>
+                <option value="COMING_SOON">🚀 Coming Soon</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -165,14 +193,46 @@ const GatewaySettings = () => {
                 className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-emerald-600"
               />
             </div>
+
+            {formData.easypaisaStatus !== 'ACTIVE' && (
+              <div className="col-span-1 sm:col-span-2">
+                <label className="block font-semibold text-rose-800 mb-0.5 text-[11px]">
+                  Custom Notice / Maintenance Message (Visible to students):
+                </label>
+                <input
+                  type="text"
+                  name="easypaisaNotice"
+                  placeholder="E.g. EasyPaisa account under maintenance / limit reached. Please use JazzCash or UPaisa."
+                  value={formData.easypaisaNotice || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-900 text-xs font-medium focus:outline-none focus:border-rose-600"
+                />
+              </div>
+            )}
           </div>
         </div>
 
         {/* JazzCash Settings */}
         <div className="p-3 sm:p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-2.5 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-            <Smartphone className="w-3.5 h-3.5 text-amber-600" />
-            <h3>JazzCash Receiving Account</h3>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
+              <Smartphone className="w-3.5 h-3.5 text-amber-600" />
+              <h3>JazzCash Receiving Account</h3>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <label className="font-bold text-slate-700 text-[11px]">Status:</label>
+              <select
+                name="jazzcashStatus"
+                value={formData.jazzcashStatus || 'ACTIVE'}
+                onChange={handleChange}
+                className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-600"
+              >
+                <option value="ACTIVE">🟢 Active (Working)</option>
+                <option value="UNDER_MAINTENANCE">🛠️ Under Maintenance</option>
+                <option value="COMING_SOON">🚀 Coming Soon</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -202,14 +262,46 @@ const GatewaySettings = () => {
                 className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-amber-600"
               />
             </div>
+
+            {formData.jazzcashStatus !== 'ACTIVE' && (
+              <div className="col-span-1 sm:col-span-2">
+                <label className="block font-semibold text-rose-800 mb-0.5 text-[11px]">
+                  Custom Notice / Maintenance Message (Visible to students):
+                </label>
+                <input
+                  type="text"
+                  name="jazzcashNotice"
+                  placeholder="E.g. JazzCash account under maintenance / limit reached. Please use EasyPaisa or UPaisa."
+                  value={formData.jazzcashNotice || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-900 text-xs font-medium focus:outline-none focus:border-rose-600"
+                />
+              </div>
+            )}
           </div>
         </div>
 
         {/* UPaisa Settings */}
         <div className="p-3 sm:p-4 rounded-xl border border-orange-200 bg-orange-50/40 space-y-2.5 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-orange-900 font-bold text-xs">
-            <Smartphone className="w-3.5 h-3.5 text-orange-600" />
-            <h3>UPaisa Receiving Account (Deposit Only)</h3>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-1.5 text-orange-900 font-bold text-xs">
+              <Smartphone className="w-3.5 h-3.5 text-orange-600" />
+              <h3>UPaisa Receiving Account (Deposit Only)</h3>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <label className="font-bold text-slate-700 text-[11px]">Status:</label>
+              <select
+                name="upaisaStatus"
+                value={formData.upaisaStatus || 'ACTIVE'}
+                onChange={handleChange}
+                className="px-2.5 py-1 rounded-lg bg-white border border-orange-300 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-600"
+              >
+                <option value="ACTIVE">🟢 Active (Working)</option>
+                <option value="UNDER_MAINTENANCE">🛠️ Under Maintenance</option>
+                <option value="COMING_SOON">🚀 Coming Soon</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -240,6 +332,22 @@ const GatewaySettings = () => {
                 className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-orange-600"
               />
             </div>
+
+            {formData.upaisaStatus !== 'ACTIVE' && (
+              <div className="col-span-1 sm:col-span-2">
+                <label className="block font-semibold text-rose-800 mb-0.5 text-[11px]">
+                  Custom Notice / Maintenance Message (Visible to students):
+                </label>
+                <input
+                  type="text"
+                  name="upaisaNotice"
+                  placeholder="E.g. UPaisa coming soon or under maintenance. Please use EasyPaisa or JazzCash."
+                  value={formData.upaisaNotice || ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-900 text-xs font-medium focus:outline-none focus:border-rose-600"
+                />
+              </div>
+            )}
           </div>
         </div>
 

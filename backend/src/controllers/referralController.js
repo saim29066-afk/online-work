@@ -1,5 +1,14 @@
 const prisma = require('../prisma');
 
+// Helper to get dynamic commission rate based on referral bonus count
+const getTierPercentage = (count) => {
+  if (count === 0) return 50.0;
+  if (count === 1) return 40.0;
+  if (count === 2) return 30.0;
+  if (count === 3) return 20.0;
+  return 10.0; // 5th referral and all subsequent ones stay at 10%
+};
+
 // @desc Get current user referral dashboard & invited list
 // @route GET /api/referrals
 const getReferralData = async (req, res) => {
@@ -14,6 +23,7 @@ const getReferralData = async (req, res) => {
           select: {
             id: true,
             name: true,
+            referralCode: true,
             createdAt: true,
             totalDeposited: true,
             investments: {
@@ -31,7 +41,7 @@ const getReferralData = async (req, res) => {
         referralEarningsEarned: {
           include: {
             referredUser: {
-              select: { name: true }
+              select: { name: true, referralCode: true }
             }
           },
           orderBy: { createdAt: 'desc' }
@@ -43,6 +53,9 @@ const getReferralData = async (req, res) => {
     const activeReferrals = user.referrals.filter(r => (r.investments && r.investments.length > 0) || (r.totalDeposited && r.totalDeposited > 0)).length;
     const totalReferralCommission = user.referralEarningsEarned.reduce((acc, curr) => acc + curr.amount, 0);
 
+    const commissionCount = user.referralEarningsEarned.length;
+    const nextBonusPercent = getTierPercentage(commissionCount);
+
     return res.status(200).json({
       success: true,
       data: {
@@ -50,6 +63,8 @@ const getReferralData = async (req, res) => {
         totalReferrals,
         activeReferrals,
         totalReferralCommission,
+        commissionCount,
+        nextBonusPercent,
         referrals: user.referrals,
         earningsHistory: user.referralEarningsEarned
       }
@@ -60,4 +75,4 @@ const getReferralData = async (req, res) => {
   }
 };
 
-module.exports = { getReferralData };
+module.exports = { getReferralData, getTierPercentage };

@@ -116,10 +116,19 @@ model PaymentSetting {
   id                    Int      @id @default(1)
   easypaisaNumber       String   @default("03451234567")
   easypaisaTitle        String   @default("Muhammad Ali (Admin)")
+  easypaisaStatus       String   @default("ACTIVE") // "ACTIVE", "UNDER_MAINTENANCE", "COMING_SOON"
+  easypaisaNotice       String?  @default("")
+  
   jazzcashNumber        String   @default("03019876543")
   jazzcashTitle         String   @default("Muhammad Ali (Admin)")
+  jazzcashStatus        String   @default("ACTIVE") // "ACTIVE", "UNDER_MAINTENANCE", "COMING_SOON"
+  jazzcashNotice        String?  @default("")
+  
   upaisaNumber          String   @default("03331234567")
   upaisaTitle           String   @default("Muhammad Ali (Admin)")
+  upaisaStatus          String   @default("ACTIVE") // "ACTIVE", "UNDER_MAINTENANCE", "COMING_SOON"
+  upaisaNotice          String?  @default("")
+
   minWithdrawal         Float    @default(800.0)
   minInvitesForWithdraw Int      @default(2)
   supportWhatsapp       String   @default("+923451234567")

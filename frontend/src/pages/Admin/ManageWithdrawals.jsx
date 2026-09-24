@@ -62,6 +62,15 @@ const ManageWithdrawals = () => {
     fetchWithdrawals(withdrawals.length > 0);
   }, []);
 
+  useEffect(() => {
+    if (message.text) {
+      const timer = setTimeout(() => {
+        setMessage({ text: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message.text]);
+
   const openApproveModal = (w) => {
     setApproveModal({
       open: true,

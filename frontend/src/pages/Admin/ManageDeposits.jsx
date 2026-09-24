@@ -66,6 +66,15 @@ const ManageDeposits = () => {
     fetchDeposits(deposits.length > 0);
   }, []);
 
+  useEffect(() => {
+    if (message.text) {
+      const timer = setTimeout(() => {
+        setMessage({ text: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message.text]);
+
   const openApproveModal = (dep) => {
     setApproveModal({ open: true, item: dep });
   };

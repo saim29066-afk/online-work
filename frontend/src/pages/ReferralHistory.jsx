@@ -39,8 +39,8 @@ const ReferralHistory = () => {
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-5 space-y-4">
       {/* Top Back Navigation */}
       <PageHeader
-        title="50% Bonus & Team Ledger"
-        subtitle="Complete log of invited student friends and 50% cash commissions"
+        title="Referral Commission & Team Ledger"
+        subtitle="Complete log of invited student friends and cash commissions"
         backTo="/dashboard"
         rightAction={
           <Link
@@ -66,19 +66,19 @@ const ReferralHistory = () => {
           </span>
         </div>
         <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 shadow-2xs col-span-2 sm:col-span-1">
-          <span className="text-[10px] text-emerald-800 font-bold uppercase block">50% Bonus Earned</span>
+          <span className="text-[10px] text-emerald-800 font-bold uppercase block">Total Bonus Earned</span>
           <span className="text-xl font-black text-emerald-700 mt-0.5 block">
             Rs. {Number(data.totalReferralCommission || 0).toLocaleString()}
           </span>
         </div>
       </div>
 
-      {/* 50% Bonus Log */}
+      {/* Bonus Log */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h3 className="font-black text-slate-900 text-xs flex items-center gap-1.5">
             <Sparkles className="w-4 h-4 text-amber-600" />
-            <span>Instant Commission Payouts (50% Per Activated Plan)</span>
+            <span>Instant Commission Payouts (Per Activated Plan)</span>
           </h3>
           <span className="text-[11px] text-slate-500 font-bold">
             {data.earningsHistory.length} Transactions
@@ -92,7 +92,7 @@ const ReferralHistory = () => {
           </div>
         ) : data.earningsHistory.length === 0 ? (
           <div className="text-center py-10 text-slate-400 text-xs font-medium">
-            No referral commissions recorded yet. When an invited friend buys a plan, your 50% bonus appears here!
+            No referral commissions recorded yet. When an invited friend buys a plan, your bonus appears here!
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -103,7 +103,7 @@ const ReferralHistory = () => {
                   <th className="py-3 px-3.5">Invited Student</th>
                   <th className="py-3 px-3.5">Plan Name</th>
                   <th className="py-3 px-3.5">Plan Price</th>
-                  <th className="py-3 px-3.5 text-right">Instant Commission (50%)</th>
+                  <th className="py-3 px-3.5 text-right">Instant Commission</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -147,7 +147,7 @@ const ReferralHistory = () => {
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
                 <tr>
                   <th className="py-3 px-3.5">Student Name</th>
-                  <th className="py-3 px-3.5">Mobile</th>
+                  <th className="py-3 px-3.5">Referral Code</th>
                   <th className="py-3 px-3.5">Joined Date</th>
                   <th className="py-3 px-3.5 text-right">Status</th>
                 </tr>
@@ -158,8 +158,8 @@ const ReferralHistory = () => {
                   return (
                     <tr key={r.id} className="text-slate-700 hover:bg-slate-50/70 transition-colors">
                       <td className="py-3 px-3.5 font-bold text-slate-900">{r.name}</td>
-                      <td className="py-3 px-3.5 text-slate-500 font-mono text-[11px]">
-                        {r.phone ? r.phone.slice(0, 4) + '****' + r.phone.slice(-3) : 'N/A'}
+                      <td className="py-3 px-3.5 text-slate-600 font-mono text-[11px] font-bold">
+                        {r.referralCode || 'STUDENT'}
                       </td>
                       <td className="py-3 px-3.5 text-slate-500 text-[11px]">
                         {new Date(r.createdAt).toLocaleDateString()}

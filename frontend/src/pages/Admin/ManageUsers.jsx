@@ -469,7 +469,7 @@ const ManageUsers = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. STUWDGJH or 03335114728"
+                  placeholder="e.g. STU12345 or 03001234567"
                   value={referrerInput}
                   onChange={(e) => setReferrerInput(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-emerald-500 font-mono"

@@ -76,6 +76,15 @@ const Withdraw = () => {
     fetchTierInfo();
   }, []);
 
+  useEffect(() => {
+    if (feedback.text) {
+      const timer = setTimeout(() => {
+        setFeedback({ text: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback.text]);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
     setCopied(true);

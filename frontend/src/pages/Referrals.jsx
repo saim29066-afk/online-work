@@ -68,31 +68,44 @@ const Referrals = () => {
         backTo="/dashboard"
       />
 
-      {/* 50% Commission Rule Visual Box */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-white to-emerald-500/10 border border-amber-300 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold w-fit mb-3">
-          <Gift className="w-3.5 h-3.5 text-amber-700" />
-          <span>50% Direct Referral Commission Rule</span>
+      {/* Tiered Commission Rule Visual Box */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-white to-emerald-500/10 border border-amber-300 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold w-fit">
+            <Gift className="w-3.5 h-3.5 text-amber-700" />
+            <span>Tiered Referral Commission Program</span>
+          </div>
+          <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            Next Reward: {data.nextBonusPercent || 50}% Commission
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
-            <span className="text-[11px] text-slate-500 font-bold block">Friend Buys Starter Plan</span>
-            <span className="text-lg font-black text-slate-900 mt-0.5 block">Rs. 1,000</span>
-            <span className="text-[10px] text-slate-500 font-medium">Bronze Plan</span>
+        {/* 5-Step Tier Ladder */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+          <div className={`p-2.5 rounded-xl border ${data.commissionCount === 0 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-black ring-2 ring-emerald-400' : 'bg-white border-slate-200 text-slate-700'}`}>
+            <span className="text-[10px] block opacity-80">1st Referral</span>
+            <span className="text-base font-black block">50%</span>
+            <span className="text-[9px] block opacity-80">Starter Bonus</span>
           </div>
-
-          <div className="flex items-center justify-center">
-            <div className="bg-emerald-100 border border-emerald-300 text-emerald-900 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-              <span>50% Instant Cash</span>
-            </div>
+          <div className={`p-2.5 rounded-xl border ${data.commissionCount === 1 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-black ring-2 ring-emerald-400' : 'bg-white border-slate-200 text-slate-700'}`}>
+            <span className="text-[10px] block opacity-80">2nd Referral</span>
+            <span className="text-base font-black block">40%</span>
+            <span className="text-[9px] block opacity-80">Silver Tier</span>
           </div>
-
-          <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 shadow-2xs">
-            <span className="text-[11px] text-emerald-800 font-bold block">You Get Instantly</span>
-            <span className="text-lg font-black text-emerald-700 mt-0.5 block">Rs. 500 Cash</span>
-            <span className="text-[10px] text-emerald-700 font-medium">Direct in your wallet</span>
+          <div className={`p-2.5 rounded-xl border ${data.commissionCount === 2 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-black ring-2 ring-emerald-400' : 'bg-white border-slate-200 text-slate-700'}`}>
+            <span className="text-[10px] block opacity-80">3rd Referral</span>
+            <span className="text-base font-black block">30%</span>
+            <span className="text-[9px] block opacity-80">Gold Tier</span>
+          </div>
+          <div className={`p-2.5 rounded-xl border ${data.commissionCount === 3 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-black ring-2 ring-emerald-400' : 'bg-white border-slate-200 text-slate-700'}`}>
+            <span className="text-[10px] block opacity-80">4th Referral</span>
+            <span className="text-base font-black block">20%</span>
+            <span className="text-[9px] block opacity-80">Platinum Tier</span>
+          </div>
+          <div className={`col-span-2 sm:col-span-1 p-2.5 rounded-xl border ${data.commissionCount >= 4 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-black ring-2 ring-emerald-400' : 'bg-white border-slate-200 text-slate-700'}`}>
+            <span className="text-[10px] block opacity-80">5th+ Unlimited</span>
+            <span className="text-base font-black block">10%</span>
+            <span className="text-[9px] block opacity-80">Lifetime Fixed</span>
           </div>
         </div>
       </div>
@@ -152,7 +165,7 @@ const Referrals = () => {
         </div>
 
         <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 shadow-2xs text-center">
-          <span className="text-[11px] text-emerald-800 font-bold block">Total 50% Bonus Earned</span>
+          <span className="text-[11px] text-emerald-800 font-bold block">Total Commission Earned</span>
           <span className="text-2xl font-black text-emerald-700 mt-1 block">
             Rs. {Number(data.totalReferralCommission || 0).toLocaleString()}
           </span>
@@ -179,6 +192,7 @@ const Referrals = () => {
               <thead>
                 <tr className="border-b border-slate-200 text-slate-600 font-bold">
                   <th className="pb-2">Student Name</th>
+                  <th className="pb-2">Referral Code</th>
                   <th className="pb-2">Joined Date</th>
                   <th className="pb-2 text-right">Plan Status</th>
                 </tr>
@@ -189,6 +203,9 @@ const Referrals = () => {
                   return (
                     <tr key={ref.id} className="text-slate-700">
                       <td className="py-2.5 font-bold text-slate-900">{ref.name}</td>
+                      <td className="py-2.5 text-slate-600 font-mono text-[11px] font-bold">
+                        {ref.referralCode || 'STUDENT'}
+                      </td>
                       <td className="py-2.5 text-slate-500 text-[11px]">
                         {new Date(ref.createdAt).toLocaleDateString()}
                       </td>
