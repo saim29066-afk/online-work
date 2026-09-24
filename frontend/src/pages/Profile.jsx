@@ -116,7 +116,7 @@ const Profile = () => {
 
       {/* Account Shortcuts */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Account History & Ledgers</h3>
+        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Account History & Records</h3>
 
         <div className="grid grid-cols-2 gap-2.5 text-xs">
           <Link
@@ -132,7 +132,7 @@ const Profile = () => {
             className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 flex flex-col items-center text-center gap-1.5 transition-colors font-bold"
           >
             <ArrowDownLeft className="w-5 h-5 text-teal-600" />
-            <span>Deposit Ledger</span>
+            <span>Deposit History</span>
           </Link>
 
           <Link
@@ -140,7 +140,7 @@ const Profile = () => {
             className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 flex flex-col items-center text-center gap-1.5 transition-colors font-bold"
           >
             <ArrowUpRight className="w-5 h-5 text-rose-600" />
-            <span>Withdraw Ledger</span>
+            <span>Withdraw History</span>
           </Link>
 
           <Link

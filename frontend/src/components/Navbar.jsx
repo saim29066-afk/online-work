@@ -387,7 +387,7 @@ const Navbar = () => {
                 className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold flex items-center gap-2"
               >
                 <ArrowDownLeft className="w-3.5 h-3.5 text-teal-600" />
-                <span>Deposit Ledger</span>
+                <span>Deposit History</span>
               </Link>
               <Link
                 to="/withdraw-history"
@@ -395,7 +395,7 @@ const Navbar = () => {
                 className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold flex items-center gap-2"
               >
                 <ArrowUpRight className="w-3.5 h-3.5 text-rose-600" />
-                <span>Withdraw Ledger</span>
+                <span>Withdraw History</span>
               </Link>
               <Link
                 to="/referral-history"

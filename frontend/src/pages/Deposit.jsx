@@ -150,7 +150,7 @@ const Deposit = () => {
             to="/deposit-history"
             className="py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 flex items-center gap-1.5 transition-colors shadow-2xs"
           >
-            <History className="w-3.5 h-3.5" /> Ledger
+            <History className="w-3.5 h-3.5" /> History
           </Link>
         }
       />

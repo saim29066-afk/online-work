@@ -170,7 +170,7 @@ const Withdraw = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-5 space-y-3.5 bg-white">
+    <div className="w-full max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-5 space-y-3.5 bg-white">
       {/* Mobile-Native Back Button Header */}
       <PageHeader
         title="Withdraw Earnings"
@@ -181,27 +181,47 @@ const Withdraw = () => {
             to="/withdraw-history"
             className="py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 flex items-center gap-1.5 transition-colors shadow-2xs"
           >
-            <History className="w-3.5 h-3.5" /> Ledger
+            <History className="w-3.5 h-3.5" /> History
           </Link>
         }
       />
 
+      {/* Paid Plan Lockout Notice (If user only has Level 0 Free Plan) */}
+      {!tierInfo.hasPaidPlan && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 text-amber-950 space-y-2.5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Lock className="w-5 h-5 text-amber-700 shrink-0" />
+            <h4 className="font-black text-sm text-slate-900">Cashout Locked: Paid Plan Required</h4>
+          </div>
+          <p className="text-xs text-slate-700 leading-relaxed font-medium">
+            Aapne abhi tak koi Paid Plan (Level 1, Level 2, Level 3, Level 4) buy nahi kiya. Rs. 500 starter cashout aur baki tamam cashouts unlock karne ke liye pehle kam az kam <strong>Level 1 Bronze Plan (Rs. 1,000)</strong> buy karein.
+          </p>
+          <Link
+            to="/plans"
+            className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-sm transition-all"
+          >
+            <Zap className="w-4 h-4 fill-white" />
+            <span>Browse & Activate Level 1 Plan →</span>
+          </Link>
+        </div>
+      )}
+
       {/* Available Balance Card */}
-      <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
         <div>
-          <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
             Available Wallet Balance
           </span>
-          <div className="text-base sm:text-xl font-bold text-emerald-700 mt-0.5">
+          <div className="text-lg sm:text-2xl font-black text-emerald-700 mt-0.5">
             Rs. {Number(currentBalance).toLocaleString()}
           </div>
-          <p className="text-[10px] sm:text-[11px] text-slate-600 mt-0.5">
+          <p className="text-xs text-slate-600 mt-1 font-medium">
             • Active Qualified Referrals: <strong className="text-slate-900 font-bold">{tierInfo.qualifiedReferralsCount} Friends</strong>
           </p>
         </div>
 
-        <div className="text-[10px] sm:text-[11px] text-slate-500 bg-white/80 backdrop-blur-xs p-2 rounded-lg border border-emerald-100 space-y-0.5 shrink-0">
-          <p className="font-semibold text-slate-800">⚡ Fast Processing</p>
+        <div className="text-xs text-slate-600 bg-white/90 backdrop-blur-xs p-2.5 rounded-xl border border-emerald-200 space-y-0.5 shrink-0">
+          <p className="font-bold text-slate-900">⚡ Fast Processing</p>
           <p>Direct transfer via EasyPaisa / JazzCash in 15-30 mins.</p>
         </div>
       </div>
@@ -379,10 +399,16 @@ const Withdraw = () => {
           ) : (
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 mt-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-98"
+              disabled={loading || !tierInfo.hasPaidPlan}
+              className={`w-full py-3.5 px-4 mt-1 rounded-xl text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
+                !tierInfo.hasPaidPlan
+                  ? 'bg-slate-400 cursor-not-allowed opacity-80'
+                  : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
             >
-              {loading ? (
+              {!tierInfo.hasPaidPlan ? (
+                <span>🔒 Buy Level 1 Plan to Unlock Cashout</span>
+              ) : loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Processing Cashout Request...</span>

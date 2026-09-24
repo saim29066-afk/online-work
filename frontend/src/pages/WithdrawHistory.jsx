@@ -39,7 +39,7 @@ const WithdrawHistory = () => {
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-5 space-y-4">
       {/* Top Back Navigation */}
       <PageHeader
-        title="Withdrawal Ledger"
+        title="Withdraw History"
         subtitle="Track EasyPaisa & JazzCash payout transfers sent by admin"
         backTo="/dashboard"
         rightAction={
