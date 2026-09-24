@@ -18,14 +18,30 @@ import {
 } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_admin_stats');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem('cached_admin_stats');
+    } catch {
+      return true;
+    }
+  });
 
   const fetchStats = async () => {
     try {
       const res = await api.get('/admin/stats');
       if (res.data.success) {
         setStats(res.data.stats);
+        try {
+          localStorage.setItem('cached_admin_stats', JSON.stringify(res.data.stats));
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to load admin stats:', err);
@@ -38,7 +54,7 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-700 gap-3 font-semibold">
         <Loader2 className="w-8 h-8 animate-spin text-purple-600" />

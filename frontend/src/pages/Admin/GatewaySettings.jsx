@@ -20,6 +20,8 @@ const GatewaySettings = () => {
     easypaisaTitle: '',
     jazzcashNumber: '',
     jazzcashTitle: '',
+    upaisaNumber: '',
+    upaisaTitle: '',
     minWithdrawal: 800,
     minInvitesForWithdraw: 1,
     supportWhatsapp: '',
@@ -49,7 +51,7 @@ const GatewaySettings = () => {
 
   const handleChange = (e) => {
     let { name, value } = e.target;
-    if (name === 'easypaisaNumber' || name === 'jazzcashNumber' || name === 'supportWhatsapp') {
+    if (name === 'easypaisaNumber' || name === 'jazzcashNumber' || name === 'upaisaNumber' || name === 'supportWhatsapp') {
       value = value.replace(/\D/g, '').slice(0, 11);
     }
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -63,6 +65,10 @@ const GatewaySettings = () => {
     }
     if (formData.jazzcashNumber && formData.jazzcashNumber.length > 11) {
       setMessage({ text: 'JazzCash number cannot exceed 11 digits', type: 'error' });
+      return;
+    }
+    if (formData.upaisaNumber && formData.upaisaNumber.length > 11) {
+      setMessage({ text: 'UPaisa number cannot exceed 11 digits', type: 'error' });
       return;
     }
     setSaving(true);
@@ -102,7 +108,7 @@ const GatewaySettings = () => {
           Payment Gateways & System Rules
         </h1>
         <p className="text-[11px] text-slate-600 mt-0.5 font-medium">
-          Update your EasyPaisa & JazzCash receiver numbers, withdrawal rules, and announcements in real time.
+          Update your EasyPaisa, JazzCash & UPaisa receiver numbers, withdrawal rules, and announcements in real time.
         </p>
       </div>
 
@@ -194,6 +200,44 @@ const GatewaySettings = () => {
                 value={formData.jazzcashTitle}
                 onChange={handleChange}
                 className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-amber-600"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* UPaisa Settings */}
+        <div className="p-3 sm:p-4 rounded-xl border border-orange-200 bg-orange-50/40 space-y-2.5 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-orange-900 font-bold text-xs">
+            <Smartphone className="w-3.5 h-3.5 text-orange-600" />
+            <h3>UPaisa Receiving Account (Deposit Only)</h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label className="block font-semibold text-slate-800 mb-0.5 text-[11px]">
+                UPaisa Mobile Number (11 Digits)
+              </label>
+              <input
+                type="text"
+                maxLength={11}
+                placeholder="03331234567"
+                name="upaisaNumber"
+                value={formData.upaisaNumber || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-900 font-mono text-xs font-bold focus:outline-none focus:border-orange-600"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-800 mb-0.5 text-[11px]">
+                UPaisa Account Title (Name)
+              </label>
+              <input
+                type="text"
+                placeholder="Account Holder Name"
+                name="upaisaTitle"
+                value={formData.upaisaTitle || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-orange-600"
               />
             </div>
           </div>

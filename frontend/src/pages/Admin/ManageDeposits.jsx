@@ -20,19 +20,36 @@ import {
 } from 'lucide-react';
 
 const ManageDeposits = () => {
-  const [deposits, setDeposits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [deposits, setDeposits] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('cached_admin_deposits');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem('cached_admin_deposits');
+    } catch {
+      return true;
+    }
+  });
   const [filter, setFilter] = useState('ALL'); // 'ALL', 'PENDING', 'APPROVED', 'REJECTED'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProof, setSelectedProof] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  const fetchDeposits = async () => {
+  const fetchDeposits = async (isBackground = false) => {
+    if (!isBackground && deposits.length === 0) setLoading(true);
     try {
       const res = await api.get('/admin/deposits');
       if (res.data.success) {
         setDeposits(res.data.deposits);
+        try {
+          sessionStorage.setItem('cached_admin_deposits', JSON.stringify(res.data.deposits));
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to load deposits:', err);
@@ -42,7 +59,7 @@ const ManageDeposits = () => {
   };
 
   useEffect(() => {
-    fetchDeposits();
+    fetchDeposits(deposits.length > 0);
   }, []);
 
   const handleApprove = async (id, amount, studentName) => {
@@ -54,16 +71,36 @@ const ManageDeposits = () => {
       return;
     }
 
+    // ⚡ Instant Optimistic Update (0ms UI latency)
+    const previousDeposits = [...deposits];
+    setDeposits((prev) =>
+      prev.map((d) =>
+        d.id === id
+          ? {
+              ...d,
+              status: 'APPROVED',
+              user: d.user
+                ? { ...d.user, balance: (Number(d.user.balance) || 0) + Number(amount) }
+                : d.user
+            }
+          : d
+      )
+    );
     setActionLoading((prev) => ({ ...prev, [id]: true }));
-    setMessage({ text: '', type: '' });
+    setMessage({ text: `Deposit of Rs. ${amount.toLocaleString()} approved instantly!`, type: 'success' });
 
     try {
       const res = await api.post(`/admin/deposits/${id}/approve`);
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
-        await fetchDeposits();
+        fetchDeposits(true);
+      } else {
+        // Revert on failure
+        setDeposits(previousDeposits);
+        setMessage({ text: res.data.message || 'Failed to approve deposit', type: 'error' });
       }
     } catch (err) {
+      setDeposits(previousDeposits);
       setMessage({
         text: err.response?.data?.message || 'Failed to approve deposit',
         type: 'error'
@@ -80,16 +117,25 @@ const ManageDeposits = () => {
     );
     if (reason === null) return;
 
+    // ⚡ Instant Optimistic Update (0ms UI latency)
+    const previousDeposits = [...deposits];
+    setDeposits((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d))
+    );
     setActionLoading((prev) => ({ ...prev, [id]: true }));
-    setMessage({ text: '', type: '' });
+    setMessage({ text: 'Deposit rejected.', type: 'success' });
 
     try {
       const res = await api.post(`/admin/deposits/${id}/reject`, { note: reason });
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
-        await fetchDeposits();
+        fetchDeposits(true);
+      } else {
+        setDeposits(previousDeposits);
+        setMessage({ text: res.data.message || 'Failed to reject deposit', type: 'error' });
       }
     } catch (err) {
+      setDeposits(previousDeposits);
       setMessage({
         text: err.response?.data?.message || 'Failed to reject deposit',
         type: 'error'
@@ -280,7 +326,9 @@ const ManageDeposits = () => {
                           className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                             dep.gateway === 'EASYPAISA'
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              : 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : dep.gateway === 'JAZZ_CASH' || dep.gateway === 'JAZZCASH'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : 'bg-orange-100 text-orange-800 border border-orange-200'
                           }`}
                         >
                           {dep.gateway}

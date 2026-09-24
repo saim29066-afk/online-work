@@ -12,6 +12,8 @@ const getGatewayInfo = async (req, res) => {
           easypaisaTitle: 'Muhammad Ali (Admin)',
           jazzcashNumber: '03019876543',
           jazzcashTitle: 'Muhammad Ali (Admin)',
+          upaisaNumber: '03331234567',
+          upaisaTitle: 'Muhammad Ali (Admin)',
           minWithdrawal: 800,
           minInvitesForWithdraw: 2,
           supportWhatsapp: '+923451234567',

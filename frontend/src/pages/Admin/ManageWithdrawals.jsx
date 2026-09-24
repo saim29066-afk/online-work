@@ -17,8 +17,21 @@ import {
 } from 'lucide-react';
 
 const ManageWithdrawals = () => {
-  const [withdrawals, setWithdrawals] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [withdrawals, setWithdrawals] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('cached_admin_withdrawals');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem('cached_admin_withdrawals');
+    } catch {
+      return true;
+    }
+  });
   const [filter, setFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [actionLoading, setActionLoading] = useState({});
@@ -28,11 +41,15 @@ const ManageWithdrawals = () => {
   const [approveModal, setApproveModal] = useState({ open: false, item: null, note: '' });
   const [rejectModal, setRejectModal] = useState({ open: false, item: null, note: '', refund: true });
 
-  const fetchWithdrawals = async () => {
+  const fetchWithdrawals = async (isBackground = false) => {
+    if (!isBackground && withdrawals.length === 0) setLoading(true);
     try {
       const res = await api.get('/admin/withdrawals');
       if (res.data.success) {
         setWithdrawals(res.data.withdrawals);
+        try {
+          sessionStorage.setItem('cached_admin_withdrawals', JSON.stringify(res.data.withdrawals));
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to load withdrawals:', err);
@@ -42,7 +59,7 @@ const ManageWithdrawals = () => {
   };
 
   useEffect(() => {
-    fetchWithdrawals();
+    fetchWithdrawals(withdrawals.length > 0);
   }, []);
 
   const openApproveModal = (w) => {
@@ -57,8 +74,22 @@ const ManageWithdrawals = () => {
     if (!approveModal.item) return;
     const { id } = approveModal.item;
 
+    // ⚡ Optimistic Instant UI Update (0ms)
+    const previousWithdrawals = [...withdrawals];
+    setWithdrawals((prev) =>
+      prev.map((w) =>
+        w.id === id
+          ? {
+              ...w,
+              status: 'APPROVED',
+              adminNote: approveModal.note
+            }
+          : w
+      )
+    );
+    setApproveModal({ open: false, item: null, note: '' });
     setActionLoading((prev) => ({ ...prev, [id]: true }));
-    setMessage({ text: '', type: '' });
+    setMessage({ text: 'Withdrawal approved successfully!', type: 'success' });
 
     try {
       const res = await api.post(`/admin/withdrawals/${id}/approve`, {
@@ -66,10 +97,13 @@ const ManageWithdrawals = () => {
       });
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
-        setApproveModal({ open: false, item: null, note: '' });
-        await fetchWithdrawals();
+        fetchWithdrawals(true);
+      } else {
+        setWithdrawals(previousWithdrawals);
+        setMessage({ text: res.data.message || 'Failed to approve withdrawal', type: 'error' });
       }
     } catch (err) {
+      setWithdrawals(previousWithdrawals);
       setMessage({
         text: err.response?.data?.message || 'Failed to approve withdrawal',
         type: 'error'
@@ -92,8 +126,22 @@ const ManageWithdrawals = () => {
     if (!rejectModal.item) return;
     const { id } = rejectModal.item;
 
+    // ⚡ Optimistic Instant UI Update (0ms)
+    const previousWithdrawals = [...withdrawals];
+    setWithdrawals((prev) =>
+      prev.map((w) =>
+        w.id === id
+          ? {
+              ...w,
+              status: 'REJECTED',
+              adminNote: rejectModal.note
+            }
+          : w
+      )
+    );
+    setRejectModal({ open: false, item: null, note: '', refund: true });
     setActionLoading((prev) => ({ ...prev, [id]: true }));
-    setMessage({ text: '', type: '' });
+    setMessage({ text: 'Withdrawal rejected.', type: 'success' });
 
     try {
       const res = await api.post(`/admin/withdrawals/${id}/reject`, {
@@ -102,10 +150,13 @@ const ManageWithdrawals = () => {
       });
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
-        setRejectModal({ open: false, item: null, note: '', refund: true });
-        await fetchWithdrawals();
+        fetchWithdrawals(true);
+      } else {
+        setWithdrawals(previousWithdrawals);
+        setMessage({ text: res.data.message || 'Failed to reject withdrawal', type: 'error' });
       }
     } catch (err) {
+      setWithdrawals(previousWithdrawals);
       setMessage({
         text: err.response?.data?.message || 'Failed to reject withdrawal',
         type: 'error'

@@ -190,19 +190,25 @@ const Deposit = () => {
   const activeNumber =
     gateway === 'EASYPAISA'
       ? settings?.easypaisaNumber || '03451234567'
-      : settings?.jazzcashNumber || '03019876543';
+      : gateway === 'JAZZCASH'
+      ? settings?.jazzcashNumber || '03019876543'
+      : settings?.upaisaNumber || '03331234567';
 
   const activeTitle =
     gateway === 'EASYPAISA'
       ? settings?.easypaisaTitle || 'Muhammad Ali (Admin)'
-      : settings?.jazzcashTitle || 'Muhammad Ali (Admin)';
+      : gateway === 'JAZZCASH'
+      ? settings?.jazzcashTitle || 'Muhammad Ali (Admin)'
+      : settings?.upaisaTitle || 'Muhammad Ali (Admin)';
+
+  const gatewayName = gateway === 'EASYPAISA' ? 'EasyPaisa' : gateway === 'JAZZCASH' ? 'JazzCash' : 'UPaisa';
 
   return (
     <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-5 space-y-4 bg-white">
       {/* Mobile-Native Back Button Header */}
       <PageHeader
         title="Deposit Funds"
-        subtitle="Recharge your wallet via EasyPaisa / JazzCash"
+        subtitle="Recharge your wallet via EasyPaisa / JazzCash / UPaisa"
         backTo="/dashboard"
         rightAction={
           <Link
@@ -214,32 +220,45 @@ const Deposit = () => {
         }
       />
 
-      {/* Gateway Selector Tabs */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Gateway Selector Tabs (3 Options) */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => setGateway('EASYPAISA')}
-          className={`py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border ${
+          className={`py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all border ${
             gateway === 'EASYPAISA'
               ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm scale-[1.01]'
               : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
           }`}
         >
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-          <span>EasyPaisa Account</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+          <span className="truncate">EasyPaisa</span>
         </button>
 
         <button
           type="button"
           onClick={() => setGateway('JAZZCASH')}
-          className={`py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border ${
+          className={`py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all border ${
             gateway === 'JAZZCASH'
               ? 'bg-amber-600 text-white border-amber-600 shadow-sm scale-[1.01]'
               : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
           }`}
         >
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-          <span>JazzCash Account</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+          <span className="truncate">JazzCash</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setGateway('UPAISA')}
+          className={`py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all border ${
+            gateway === 'UPAISA'
+              ? 'bg-orange-600 text-white border-orange-600 shadow-sm scale-[1.01]'
+              : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
+          }`}
+        >
+          <div className="w-2.5 h-2.5 rounded-full bg-orange-400 shrink-0" />
+          <span className="truncate">UPaisa</span>
         </button>
       </div>
 
@@ -248,7 +267,7 @@ const Deposit = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <span className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-              Official {gateway === 'EASYPAISA' ? 'EasyPaisa' : 'JazzCash'} Receiver Number:
+              Official {gatewayName} Receiver Number:
             </span>
             <div className="flex items-center gap-3 mt-1">
               <span className="text-2xl sm:text-3xl font-mono font-black text-slate-900 tracking-wider">
@@ -272,7 +291,7 @@ const Deposit = () => {
             <p className="text-slate-900 font-bold flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> 3 Quick Steps:
             </p>
-            <p>1. Open {gateway === 'EASYPAISA' ? 'EasyPaisa' : 'JazzCash'} app</p>
+            <p>1. Open {gatewayName} app</p>
             <p>2. Send amount to {activeNumber}</p>
             <p>3. Take screenshot & note TID</p>
           </div>

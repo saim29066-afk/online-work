@@ -1,23 +1,30 @@
 const prisma = require('../prisma');
 
-// @desc Get overview statistics
+// @desc Get overview statistics (Concurrent Parallel Queries)
 // @route GET /api/admin/stats
 const getAdminStats = async (req, res) => {
   try {
-    const totalUsers = await prisma.user.count({ where: { role: 'USER' } });
-    const pendingDeposits = await prisma.deposit.count({ where: { status: 'PENDING' } });
-    const pendingWithdrawals = await prisma.withdrawal.count({ where: { status: 'PENDING' } });
-    const activeInvestments = await prisma.userInvestment.count({ where: { status: 'ACTIVE' } });
-
-    const approvedDepositsSum = await prisma.deposit.aggregate({
-      where: { status: 'APPROVED' },
-      _sum: { amount: true }
-    });
-
-    const approvedWithdrawalsSum = await prisma.withdrawal.aggregate({
-      where: { status: 'APPROVED' },
-      _sum: { amount: true }
-    });
+    const [
+      totalUsers,
+      pendingDeposits,
+      pendingWithdrawals,
+      activeInvestments,
+      approvedDepositsSum,
+      approvedWithdrawalsSum
+    ] = await Promise.all([
+      prisma.user.count({ where: { role: 'USER' } }),
+      prisma.deposit.count({ where: { status: 'PENDING' } }),
+      prisma.withdrawal.count({ where: { status: 'PENDING' } }),
+      prisma.userInvestment.count({ where: { status: 'ACTIVE' } }),
+      prisma.deposit.aggregate({
+        where: { status: 'APPROVED' },
+        _sum: { amount: true }
+      }),
+      prisma.withdrawal.aggregate({
+        where: { status: 'APPROVED' },
+        _sum: { amount: true }
+      })
+    ]);
 
     return res.status(200).json({
       success: true,
@@ -50,7 +57,8 @@ const getAllDeposits = async (req, res) => {
           select: { id: true, name: true, phone: true, email: true, balance: true, isRestricted: true }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 200
     });
 
     return res.status(200).json({ success: true, deposits });
@@ -68,9 +76,7 @@ const approveDeposit = async (req, res) => {
 
     const deposit = await prisma.deposit.findUnique({
       where: { id },
-      include: {
-        user: true
-      }
+      select: { id: true, userId: true, amount: true, status: true }
     });
 
     if (!deposit) {
@@ -81,28 +87,27 @@ const approveDeposit = async (req, res) => {
       return res.status(400).json({ success: false, message: `Deposit is already ${deposit.status.toLowerCase()}` });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedDeposit = await tx.deposit.update({
+    // Fast batched transaction in single TCP roundtrip
+    const [updatedDeposit, updatedUser] = await prisma.$transaction([
+      prisma.deposit.update({
         where: { id },
         data: { status: 'APPROVED', adminNote: 'Approved by Administrator' }
-      });
-
-      const updatedUser = await tx.user.update({
+      }),
+      prisma.user.update({
         where: { id: deposit.userId },
         data: {
           balance: { increment: deposit.amount },
           totalDeposited: { increment: deposit.amount }
-        }
-      });
-
-      return { updatedDeposit, updatedUser };
-    });
+        },
+        select: { balance: true }
+      })
+    ]);
 
     return res.status(200).json({
       success: true,
       message: `Deposit of Rs. ${deposit.amount.toLocaleString()} approved! Funds credited to student wallet.`,
-      deposit: result.updatedDeposit,
-      newBalance: result.updatedUser.balance
+      deposit: updatedDeposit,
+      newBalance: updatedUser.balance
     });
   } catch (error) {
     console.error('Approve deposit error:', error);
@@ -116,18 +121,6 @@ const rejectDeposit = async (req, res) => {
   try {
     const { id } = req.params;
     const { note } = req.body;
-
-    const deposit = await prisma.deposit.findUnique({
-      where: { id }
-    });
-
-    if (!deposit) {
-      return res.status(404).json({ success: false, message: 'Deposit request not found' });
-    }
-
-    if (deposit.status !== 'PENDING') {
-      return res.status(400).json({ success: false, message: `Deposit is already ${deposit.status.toLowerCase()}` });
-    }
 
     const updatedDeposit = await prisma.deposit.update({
       where: { id },
@@ -169,45 +162,25 @@ const getAllWithdrawals = async (req, res) => {
             totalWithdrawn: true,
             totalEarned: true,
             isRestricted: true,
-            referrals: {
-              include: {
-                investments: { where: { amount: { gte: 1000 } } },
-                deposits: { where: { status: 'APPROVED' } }
-              }
-            },
-            referralEarningsEarned: {
-              select: { amount: true }
-            },
             investments: {
               where: { status: 'ACTIVE' },
-              include: { plan: true }
-            },
-            deposits: {
-              where: { status: 'APPROVED' },
-              select: { amount: true }
+              select: { amount: true, plan: { select: { name: true } } },
+              take: 1
             }
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 200
     });
 
     const enrichedWithdrawals = withdrawals.map((w) => {
       const u = w.user || {};
-      const activeReferrals = (u.referrals || []).filter(
-        r => (r.investments && r.investments.length > 0) || (r.deposits && r.deposits.length > 0)
-      ).length;
-      
-      const referralEarningsTotal = (u.referralEarningsEarned || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-      const approvedDepositsTotal = (u.deposits || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-      const totalDepositedValue = approvedDepositsTotal > 0 ? approvedDepositsTotal : (u.totalDeposited || 0);
       const activePlan = u.investments && u.investments.length > 0 ? (u.investments[0].plan?.name || `Plan (Rs. ${u.investments[0].amount})`) : 'No Plan';
 
       return {
         ...w,
-        userTotalDeposited: totalDepositedValue,
-        userReferralEarnings: referralEarningsTotal,
-        userActiveReferralsCount: activeReferrals,
+        userTotalDeposited: u.totalDeposited || 0,
         userActivePlan: activePlan,
         userBalance: u.balance || 0
       };
@@ -227,7 +200,8 @@ const approveWithdrawal = async (req, res) => {
     const { note } = req.body;
 
     const withdrawal = await prisma.withdrawal.findUnique({
-      where: { id }
+      where: { id },
+      select: { id: true, userId: true, amount: true, status: true }
     });
 
     if (!withdrawal) {
@@ -238,29 +212,26 @@ const approveWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: `Withdrawal is already ${withdrawal.status.toLowerCase()}` });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedWithdrawal = await tx.withdrawal.update({
+    const [updatedWithdrawal] = await prisma.$transaction([
+      prisma.withdrawal.update({
         where: { id },
         data: {
           status: 'APPROVED',
           adminNote: note || 'Withdrawal successfully transferred to student account.'
         }
-      });
-
-      await tx.user.update({
+      }),
+      prisma.user.update({
         where: { id: withdrawal.userId },
         data: {
           totalWithdrawn: { increment: withdrawal.amount }
         }
-      });
-
-      return updatedWithdrawal;
-    });
+      })
+    ]);
 
     return res.status(200).json({
       success: true,
       message: `Withdrawal for Rs. ${withdrawal.amount.toLocaleString()} marked as APPROVED / PAID.`,
-      withdrawal: result
+      withdrawal: updatedWithdrawal
     });
   } catch (error) {
     console.error('Approve withdrawal error:', error);
@@ -276,7 +247,8 @@ const rejectWithdrawal = async (req, res) => {
     const { note, refund = true } = req.body;
 
     const withdrawal = await prisma.withdrawal.findUnique({
-      where: { id }
+      where: { id },
+      select: { id: true, userId: true, amount: true, status: true }
     });
 
     if (!withdrawal) {
@@ -287,34 +259,33 @@ const rejectWithdrawal = async (req, res) => {
       return res.status(400).json({ success: false, message: `Withdrawal is already ${withdrawal.status.toLowerCase()}` });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedWithdrawal = await tx.withdrawal.update({
+    const updates = [
+      prisma.withdrawal.update({
         where: { id },
         data: {
           status: 'REJECTED',
           adminNote: note || 'Withdrawal rejected / transfer failed.'
         }
-      });
+      })
+    ];
 
-      let updatedUser = null;
-      if (refund) {
-        updatedUser = await tx.user.update({
+    if (refund) {
+      updates.push(
+        prisma.user.update({
           where: { id: withdrawal.userId },
-          data: {
-            balance: { increment: withdrawal.amount }
-          }
-        });
-      }
+          data: { balance: { increment: withdrawal.amount } }
+        })
+      );
+    }
 
-      return { updatedWithdrawal, updatedUser };
-    });
+    const [updatedWithdrawal] = await prisma.$transaction(updates);
 
     return res.status(200).json({
       success: true,
       message: refund
         ? `Withdrawal marked as Failed/Rejected. Rs. ${withdrawal.amount.toLocaleString()} has been refunded to student wallet.`
         : `Withdrawal marked as Failed/Rejected without refund.`,
-      withdrawal: result.updatedWithdrawal
+      withdrawal: updatedWithdrawal
     });
   } catch (error) {
     console.error('Reject withdrawal error:', error);
@@ -554,6 +525,8 @@ const updateSettings = async (req, res) => {
       easypaisaTitle,
       jazzcashNumber,
       jazzcashTitle,
+      upaisaNumber,
+      upaisaTitle,
       minWithdrawal,
       minInvitesForWithdraw,
       supportWhatsapp,
@@ -569,6 +542,8 @@ const updateSettings = async (req, res) => {
           easypaisaTitle: easypaisaTitle || 'Muhammad Ali (Admin)',
           jazzcashNumber: jazzcashNumber || '03019876543',
           jazzcashTitle: jazzcashTitle || 'Muhammad Ali (Admin)',
+          upaisaNumber: upaisaNumber || '03331234567',
+          upaisaTitle: upaisaTitle || 'Muhammad Ali (Admin)',
           minWithdrawal: minWithdrawal ? parseFloat(minWithdrawal) : 800,
           minInvitesForWithdraw: minInvitesForWithdraw ? parseInt(minInvitesForWithdraw) : 1,
           supportWhatsapp: supportWhatsapp || '+923451234567',
@@ -584,6 +559,8 @@ const updateSettings = async (req, res) => {
           easypaisaTitle: easypaisaTitle || settings.easypaisaTitle,
           jazzcashNumber: jazzcashNumber || settings.jazzcashNumber,
           jazzcashTitle: jazzcashTitle || settings.jazzcashTitle,
+          upaisaNumber: upaisaNumber || settings.upaisaNumber,
+          upaisaTitle: upaisaTitle || settings.upaisaTitle,
           minWithdrawal: minWithdrawal !== undefined ? parseFloat(minWithdrawal) : settings.minWithdrawal,
           minInvitesForWithdraw: minInvitesForWithdraw !== undefined ? parseInt(minInvitesForWithdraw) : settings.minInvitesForWithdraw,
           supportWhatsapp: supportWhatsapp || settings.supportWhatsapp,

@@ -118,11 +118,13 @@ model PaymentSetting {
   easypaisaTitle        String   @default("Muhammad Ali (Admin)")
   jazzcashNumber        String   @default("03019876543")
   jazzcashTitle         String   @default("Muhammad Ali (Admin)")
+  upaisaNumber          String   @default("03331234567")
+  upaisaTitle           String   @default("Muhammad Ali (Admin)")
   minWithdrawal         Float    @default(800.0)
   minInvitesForWithdraw Int      @default(2)
   supportWhatsapp       String   @default("+923451234567")
   supportEmail          String   @default("support@studentinvest.pk")
-  noticeText            String   @default("🎉 Welcome Students! Rs. 250 Free Bonus on registration + 50% referral bonus available!")
+  noticeText            String   @default("🎉 Welcome Students! Level 0 Free Plan (Rs. 35/day) + Rs. 150 Signup Bonus active!")
   updatedAt             DateTime @updatedAt
 }
 
