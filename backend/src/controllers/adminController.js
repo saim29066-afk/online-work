@@ -111,7 +111,7 @@ const approveDeposit = async (req, res) => {
     });
   } catch (error) {
     console.error('Approve deposit error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to approve deposit' });
+    return res.status(500).json({ success: false, message: error.message || 'Failed to approve deposit' });
   }
 };
 
@@ -120,7 +120,16 @@ const approveDeposit = async (req, res) => {
 const rejectDeposit = async (req, res) => {
   try {
     const { id } = req.params;
-    const { note } = req.body;
+    const { note } = req.body || {};
+
+    const deposit = await prisma.deposit.findUnique({
+      where: { id },
+      select: { id: true, status: true }
+    });
+
+    if (!deposit) {
+      return res.status(404).json({ success: false, message: 'Deposit request not found' });
+    }
 
     const updatedDeposit = await prisma.deposit.update({
       where: { id },
@@ -137,7 +146,7 @@ const rejectDeposit = async (req, res) => {
     });
   } catch (error) {
     console.error('Reject deposit error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to reject deposit' });
+    return res.status(500).json({ success: false, message: error.message || 'Failed to reject deposit' });
   }
 };
 

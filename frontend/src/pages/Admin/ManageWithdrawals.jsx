@@ -364,18 +364,20 @@ const ManageWithdrawals = () => {
                 {w.status === 'PENDING' && (
                   <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
                     <button
+                      type="button"
                       onClick={() => openApproveModal(w)}
                       disabled={actionLoading[w.id]}
-                      className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95"
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
                     >
                       <Check className="w-4 h-4 stroke-[3]" />
                       <span>Accept & Transfer (Rs. {Number(w.amount).toLocaleString()})</span>
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => openRejectModal(w)}
                       disabled={actionLoading[w.id]}
-                      className="py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black text-xs flex items-center gap-1.5 transition-all active:scale-95"
+                      className="py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                     >
                       <X className="w-4 h-4 stroke-[2.5]" />
                       <span>Reject & Refund</span>

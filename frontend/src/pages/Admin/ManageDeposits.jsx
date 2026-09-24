@@ -41,6 +41,10 @@ const ManageDeposits = () => {
   const [actionLoading, setActionLoading] = useState({});
   const [message, setMessage] = useState({ text: '', type: '' });
 
+  // Modal dialog states
+  const [approveModal, setApproveModal] = useState({ open: false, item: null });
+  const [rejectModal, setRejectModal] = useState({ open: false, item: null, note: 'Invalid TID / Slip verification failed' });
+
   const fetchDeposits = async (isBackground = false) => {
     if (!isBackground && deposits.length === 0) setLoading(true);
     try {
@@ -62,14 +66,14 @@ const ManageDeposits = () => {
     fetchDeposits(deposits.length > 0);
   }, []);
 
-  const handleApprove = async (id, amount, studentName) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to APPROVE deposit of Rs. ${amount.toLocaleString()} for ${studentName}? This will credit the funds to their wallet instantly.`
-      )
-    ) {
-      return;
-    }
+  const openApproveModal = (dep) => {
+    setApproveModal({ open: true, item: dep });
+  };
+
+  const submitApprove = async () => {
+    if (!approveModal.item) return;
+    const dep = approveModal.item;
+    const { id, amount } = dep;
 
     // ⚡ Instant Optimistic Update (0ms UI latency)
     const previousDeposits = [...deposits];
@@ -79,6 +83,7 @@ const ManageDeposits = () => {
           ? {
               ...d,
               status: 'APPROVED',
+              adminNote: 'Approved by Administrator',
               user: d.user
                 ? { ...d.user, balance: (Number(d.user.balance) || 0) + Number(amount) }
                 : d.user
@@ -86,6 +91,7 @@ const ManageDeposits = () => {
           : d
       )
     );
+    setApproveModal({ open: false, item: null });
     setActionLoading((prev) => ({ ...prev, [id]: true }));
     setMessage({ text: `Deposit of Rs. ${amount.toLocaleString()} approved instantly!`, type: 'success' });
 
@@ -95,14 +101,13 @@ const ManageDeposits = () => {
         setMessage({ text: res.data.message, type: 'success' });
         fetchDeposits(true);
       } else {
-        // Revert on failure
         setDeposits(previousDeposits);
         setMessage({ text: res.data.message || 'Failed to approve deposit', type: 'error' });
       }
     } catch (err) {
       setDeposits(previousDeposits);
       setMessage({
-        text: err.response?.data?.message || 'Failed to approve deposit',
+        text: err.response?.data?.message || err.message || 'Failed to approve deposit',
         type: 'error'
       });
     } finally {
@@ -110,23 +115,31 @@ const ManageDeposits = () => {
     }
   };
 
-  const handleReject = async (id) => {
-    const reason = window.prompt(
-      'Enter rejection reason (e.g. Invalid TID / Screenshot unreadable):',
-      'Transaction ID verification failed'
-    );
-    if (reason === null) return;
+  const openRejectModal = (dep) => {
+    setRejectModal({
+      open: true,
+      item: dep,
+      note: 'Transaction slip or TID verification failed'
+    });
+  };
+
+  const submitReject = async () => {
+    if (!rejectModal.item) return;
+    const dep = rejectModal.item;
+    const { id } = dep;
+    const note = rejectModal.note;
 
     // ⚡ Instant Optimistic Update (0ms UI latency)
     const previousDeposits = [...deposits];
     setDeposits((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d))
+      prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED', adminNote: note } : d))
     );
+    setRejectModal({ open: false, item: null, note: '' });
     setActionLoading((prev) => ({ ...prev, [id]: true }));
-    setMessage({ text: 'Deposit rejected.', type: 'success' });
+    setMessage({ text: 'Deposit request rejected.', type: 'success' });
 
     try {
-      const res = await api.post(`/admin/deposits/${id}/reject`, { note: reason });
+      const res = await api.post(`/admin/deposits/${id}/reject`, { note });
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
         fetchDeposits(true);
@@ -137,7 +150,7 @@ const ManageDeposits = () => {
     } catch (err) {
       setDeposits(previousDeposits);
       setMessage({
-        text: err.response?.data?.message || 'Failed to reject deposit',
+        text: err.response?.data?.message || err.message || 'Failed to reject deposit',
         type: 'error'
       });
     } finally {
@@ -395,9 +408,10 @@ const ManageDeposits = () => {
                 {dep.status === 'PENDING' && (
                   <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
                     <button
-                      onClick={() => handleApprove(dep.id, dep.amount, dep.user?.name)}
+                      type="button"
+                      onClick={() => openApproveModal(dep)}
                       disabled={actionLoading[dep.id]}
-                      className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95"
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
                     >
                       {actionLoading[dep.id] ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -408,9 +422,10 @@ const ManageDeposits = () => {
                     </button>
 
                     <button
-                      onClick={() => handleReject(dep.id)}
+                      type="button"
+                      onClick={() => openRejectModal(dep)}
                       disabled={actionLoading[dep.id]}
-                      className="py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black text-xs flex items-center gap-1.5 transition-all active:scale-95"
+                      className="py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                     >
                       <X className="w-4 h-4 stroke-[2.5]" />
                       <span>Reject</span>
@@ -422,6 +437,142 @@ const ManageDeposits = () => {
           })
         )}
       </div>
+
+      {/* Approve Confirmation Modal */}
+      {approveModal.open && approveModal.item && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                  <Check className="w-5 h-5 stroke-[3]" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-sm">Approve Student Deposit</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Credit funds directly to wallet</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setApproveModal({ open: false, item: null })}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-semibold">Student Name:</span>
+                <span className="font-black text-slate-900">{approveModal.item.user?.name || 'Student'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-semibold">Phone Number:</span>
+                <span className="font-mono font-bold text-slate-900">{approveModal.item.user?.phone}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-semibold">Deposit Amount:</span>
+                <span className="font-black text-emerald-700 text-base">
+                  Rs. {Number(approveModal.item.amount).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-semibold">Gateway / TID:</span>
+                <span className="font-bold text-slate-800">
+                  {approveModal.item.gateway} • <span className="font-mono">{approveModal.item.transactionId}</span>
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-600 font-medium">
+              Are you sure you want to approve this slip? <strong>Rs. {Number(approveModal.item.amount).toLocaleString()}</strong> will be added immediately to the student's balance.
+            </p>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setApproveModal({ open: false, item: null })}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitApprove}
+                disabled={actionLoading[approveModal.item.id]}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+              >
+                {actionLoading[approveModal.item.id] ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4 stroke-[3]" />
+                )}
+                <span>Confirm & Credit</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Confirmation Modal */}
+      {rejectModal.open && rejectModal.item && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center text-rose-700 font-bold">
+                  <X className="w-5 h-5 stroke-[3]" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-sm">Reject Deposit Request</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Student: {rejectModal.item.user?.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRejectModal({ open: false, item: null, note: '' })}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                Reason for Rejection (Visible to student on dashboard):
+              </label>
+              <textarea
+                rows={3}
+                value={rejectModal.note}
+                onChange={(e) => setRejectModal((prev) => ({ ...prev, note: e.target.value }))}
+                placeholder="E.g. Invalid Transaction ID, slip unreadable, or payment not received."
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-rose-500 resize-none font-medium"
+              />
+            </div>
+
+            <div className="flex gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setRejectModal({ open: false, item: null, note: '' })}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitReject}
+                disabled={actionLoading[rejectModal.item.id]}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+              >
+                {actionLoading[rejectModal.item.id] ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <X className="w-4 h-4 stroke-[2.5]" />
+                )}
+                <span>Reject Deposit</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Full Resolution Slip Lightbox */}
       {selectedProof && (
