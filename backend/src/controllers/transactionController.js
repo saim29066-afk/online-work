@@ -126,7 +126,10 @@ const submitDeposit = async (req, res) => {
     });
   } catch (error) {
     console.error('Deposit submission error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to submit deposit request' });
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to submit deposit request. Please try again.'
+    });
   }
 };
 
