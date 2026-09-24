@@ -11,6 +11,7 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [requiresDeposit, setRequiresDeposit] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
   const totalReturn = plan.dailyBonus * plan.durationDays;
@@ -23,6 +24,7 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
       return;
     }
     setErrorMsg('');
+    setRequiresDeposit(false);
     setSuccessMsg('');
     setShowModal(true);
   };
@@ -30,6 +32,7 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
   const confirmPurchase = async () => {
     setLoading(true);
     setErrorMsg('');
+    setRequiresDeposit(false);
     try {
       const res = await api.post('/plans/buy', { planId: plan.id });
       if (res.data.success) {
@@ -47,6 +50,9 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
       }
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Plan purchase failed. Please check your balance.');
+      if (err.response?.data?.requiresDeposit) {
+        setRequiresDeposit(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -193,7 +199,7 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
                 <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
                 <div>
                   <p>{errorMsg}</p>
-                  {(user?.balance || 0) < plan.price && (
+                  {((user?.balance || 0) < plan.price || requiresDeposit) && (
                     <button
                       onClick={() => navigate('/deposit')}
                       className="mt-1 text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"

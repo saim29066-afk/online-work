@@ -77,11 +77,29 @@ const buyPlan = async (req, res) => {
           message: 'Level 0 Free Starter Plan is already active on your account! You are already receiving Rs. 50/day.'
         });
       }
-    } else if (user.balance < plan.price) {
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient balance! You need Rs. ${plan.price.toLocaleString()} to activate this plan. Current balance: Rs. ${user.balance.toLocaleString()}. Please deposit funds first.`
+    } else {
+      // For paid plans: Check if user has made at least 1 approved deposit
+      const approvedDepositCount = await prisma.deposit.count({
+        where: {
+          userId,
+          status: 'APPROVED'
+        }
       });
+
+      if (approvedDepositCount === 0 && (user.totalDeposited || 0) <= 0) {
+        return res.status(400).json({
+          success: false,
+          requiresDeposit: true,
+          message: 'Plan buy karne ke liye kam az kam 1 Deposit approved hona zaroori hai! Referral bonus se plan buy karne ke liye pehle khud kam az kam 1 deposit karein.'
+        });
+      }
+
+      if (user.balance < plan.price) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient balance! You need Rs. ${plan.price.toLocaleString()} to activate this plan. Current balance: Rs. ${user.balance.toLocaleString()}. Please deposit funds first.`
+        });
+      }
     }
 
     // Process Purchase inside a database transaction
