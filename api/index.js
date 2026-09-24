@@ -1,21 +1,11 @@
-const path = require('path');
-const fs = require('fs');
+const dotenv = require('dotenv');
+dotenv.config();
 
-if (process.env.VERCEL) {
-  const tmpDbPath = '/tmp/dev.db';
-  const sourceDbPath = path.join(__dirname, '../backend/prisma/dev.db');
-
-  if (!fs.existsSync(tmpDbPath)) {
-    try {
-      if (fs.existsSync(sourceDbPath)) {
-        fs.copyFileSync(sourceDbPath, tmpDbPath);
-        console.log('✅ SQLite DB copied to /tmp/dev.db for full write access on Vercel');
-      }
-    } catch (e) {
-      console.error('Failed to copy db to /tmp:', e);
-    }
-  }
-  process.env.DATABASE_URL = `file:${tmpDbPath}`;
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = "postgresql://postgres.qhxbmtokfulafggynutn:bangashsaim1214@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
+}
+if (!process.env.DIRECT_URL) {
+  process.env.DIRECT_URL = "postgresql://postgres.qhxbmtokfulafggynutn:bangashsaim1214@aws-0-ap-south-1.pooler.supabase.com:5432/postgres";
 }
 
 const app = require('../backend/src/server');
