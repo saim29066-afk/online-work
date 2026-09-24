@@ -304,14 +304,9 @@ const Deposit = () => {
 
           {/* Screenshot Upload Field */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block font-bold text-slate-800 text-xs">
-                Upload Payment Slip Screenshot <span className="text-rose-500">*</span>
-              </label>
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                🛡️ GPS & Location Data Stripped
-              </span>
-            </div>
+            <label className="block font-bold text-slate-800 text-xs mb-1">
+              Upload Payment Slip Screenshot <span className="text-rose-500">*</span>
+            </label>
             <div className="relative border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-4 text-center cursor-pointer bg-slate-50 transition-colors">
               <input
                 type="file"
@@ -339,7 +334,7 @@ const Deposit = () => {
                     <Upload className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-bold text-slate-800">Tap to select slip from Gallery / Photos</p>
-                  <p className="text-[11px] text-slate-500">Supports JPG, PNG, WEBP (Zero Tracking)</p>
+                  <p className="text-[11px] text-slate-500">Supports JPG, PNG, WEBP</p>
                 </div>
               )}
             </div>
