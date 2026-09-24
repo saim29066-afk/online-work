@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const prisma = require('../prisma');
 
 const generateToken = (id) => {
@@ -8,11 +9,12 @@ const generateToken = (id) => {
   });
 };
 
-const generateReferralCode = () => {
+const fastReferralCode = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const randBytes = crypto.randomBytes(4);
   let code = 'STU';
-  for (let i = 0; i < 5; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(randBytes[i] % chars.length);
   }
   return code;
 };
@@ -35,80 +37,77 @@ const register = async (req, res) => {
       });
     }
 
-    // Check existing phone
-    const existingUser = await prisma.user.findUnique({
-      where: { phone: cleanPhone }
-    });
+    // Parallel checks for maximum speed
+    const checkPromises = [
+      prisma.user.findUnique({ where: { phone: cleanPhone }, select: { id: true } })
+    ];
 
-    if (existingUser) {
+    const cleanEmail = email && email.trim() !== '' ? email.trim().toLowerCase() : null;
+    if (cleanEmail) {
+      checkPromises.push(prisma.user.findUnique({ where: { email: cleanEmail }, select: { id: true } }));
+    } else {
+      checkPromises.push(Promise.resolve(null));
+    }
+
+    let rawRef = (referralCode || '').trim();
+    if (rawRef.includes('ref=')) {
+      rawRef = rawRef.split('ref=')[1].split('&')[0].trim();
+    }
+    const cleanRefPhone = rawRef.replace(/\D/g, '');
+
+    if (rawRef) {
+      checkPromises.push(
+        prisma.user.findFirst({
+          where: {
+            OR: [
+              { referralCode: rawRef.toUpperCase() },
+              ...(cleanRefPhone.length === 11 ? [{ phone: cleanRefPhone }] : [])
+            ]
+          },
+          select: { id: true }
+        })
+      );
+    } else {
+      checkPromises.push(Promise.resolve(null));
+    }
+
+    // Run hashing and DB existence checks simultaneously
+    const [hashingResult, dbChecks] = await Promise.all([
+      bcrypt.hash(password, 8),
+      Promise.all(checkPromises)
+    ]);
+
+    const [existingPhone, existingEmail, referrer] = dbChecks;
+
+    if (existingPhone) {
       return res.status(400).json({ success: false, message: 'An account with this phone number already exists' });
     }
-
-    // Check optional email uniqueness if provided
-    if (email && email.trim() !== '') {
-      const existingEmail = await prisma.user.findUnique({
-        where: { email: email.trim().toLowerCase() }
-      });
-      if (existingEmail) {
-        return res.status(400).json({ success: false, message: 'This email is already registered' });
-      }
+    if (existingEmail) {
+      return res.status(400).json({ success: false, message: 'This email is already registered' });
     }
 
-    // Check referrer if referralCode provided (handles code, mobile number, or full URL)
-    let referredById = null;
-    if (referralCode && referralCode.trim() !== '') {
-      let rawRef = referralCode.trim();
-      // Extract code if user pasted a URL e.g. ...?ref=CODE
-      if (rawRef.includes('ref=')) {
-        rawRef = rawRef.split('ref=')[1].split('&')[0];
-      }
-      rawRef = rawRef.trim();
-
-      const cleanRefPhone = rawRef.replace(/\D/g, '');
-
-      // Search by referralCode or phone number
-      const referrer = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { referralCode: rawRef.toUpperCase() },
-            ...(cleanRefPhone.length === 11 ? [{ phone: cleanRefPhone }] : [])
-          ]
-        }
-      });
-
-      if (referrer) {
-        referredById = referrer.id;
-      }
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Generate unique referral code
-    let myReferralCode = generateReferralCode();
-    let isUnique = false;
-    while (!isUnique) {
-      const check = await prisma.user.findUnique({ where: { referralCode: myReferralCode } });
-      if (!check) {
-        isUnique = true;
-      } else {
-        myReferralCode = generateReferralCode();
-      }
-    }
-
-    // New student gets Rs. 250 FREE SIGNUP BONUS!
+    const myReferralCode = fastReferralCode();
     const signupBonus = 250.0;
 
     const result = await prisma.user.create({
       data: {
         name: name.trim(),
         phone: cleanPhone,
-        email: email && email.trim() !== '' ? email.trim().toLowerCase() : null,
-        password: hashedPassword,
+        email: cleanEmail,
+        password: hashingResult,
         referralCode: myReferralCode,
-        referredById,
+        referredById: referrer ? referrer.id : null,
         balance: signupBonus,
         totalEarned: signupBonus
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        role: true,
+        balance: true,
+        referralCode: true
       }
     });
 
@@ -118,15 +117,7 @@ const register = async (req, res) => {
       success: true,
       message: 'Congratulations! Rs. 250 Free Welcome Bonus has been credited to your account! Activate your plan from the dashboard.',
       token,
-      user: {
-        id: result.id,
-        name: result.name,
-        phone: result.phone,
-        email: result.email,
-        role: result.role,
-        balance: result.balance,
-        referralCode: result.referralCode
-      }
+      user: result
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -154,6 +145,21 @@ const login = async (req, res) => {
           ...(cleanPhone ? [{ phone: cleanPhone }] : [{ phone: cleanInput }]),
           ...(cleanInput.toLowerCase() === 'admin' ? [{ email: 'admin@studentinvest.pk' }] : [])
         ]
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        password: true,
+        role: true,
+        balance: true,
+        totalDeposited: true,
+        totalWithdrawn: true,
+        totalEarned: true,
+        referralCode: true,
+        isRestricted: true,
+        restrictionReason: true
       }
     });
 
