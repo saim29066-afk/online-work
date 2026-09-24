@@ -73,81 +73,129 @@ const WithdrawHistory = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+      {/* Vertical Withdrawal Cards (No horizontal scroll) */}
+      <div className="space-y-3">
         {loading ? (
-          <div className="text-center py-8 text-slate-400 text-xs flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400 text-xs flex items-center justify-center gap-2 shadow-2xs">
+            <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
             <span>Loading withdrawal history...</span>
           </div>
         ) : withdrawals.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-xs font-medium">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs font-medium shadow-2xs">
             No withdrawal requests submitted yet.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-3">Date & Time</th>
-                  <th className="py-2.5 px-3">Gateway</th>
-                  <th className="py-2.5 px-3">Amount</th>
-                  <th className="py-2.5 px-3">Account Info</th>
-                  <th className="py-2.5 px-3">Admin Confirmation</th>
-                  <th className="py-2.5 px-3 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-[11px]">
-                {withdrawals.map((w) => (
-                  <tr key={w.id} className="text-slate-700 hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-3.5 text-slate-500 text-[11px]">
-                      {new Date(w.createdAt).toLocaleDateString()} <br />
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(w.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3.5">
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          w.gateway === 'EASYPAISA'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                            : 'bg-amber-100 text-amber-800 border border-amber-200'
-                        }`}
-                      >
-                        {w.gateway}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3.5 font-black text-slate-900 text-sm">
-                      Rs. {w.amount.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-3.5">
-                      <p className="font-bold text-slate-900">{w.accountTitle}</p>
-                      <p className="text-[10px] text-slate-500 font-mono font-bold">{w.accountNumber}</p>
-                    </td>
-                    <td className="py-3 px-3.5 text-slate-600 text-[11px] max-w-[200px] truncate" title={w.adminNote}>
-                      {w.adminNote ? `💬 ${w.adminNote}` : '-'}
-                    </td>
-                    <td className="py-3 px-3.5 text-right">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          w.status === 'APPROVED'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                            : w.status === 'REJECTED'
-                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                            : 'bg-amber-100 text-amber-800 border border-amber-300'
-                        }`}
-                      >
-                        {w.status === 'APPROVED' && <CheckCircle2 className="w-3 h-3" />}
-                        {w.status === 'PENDING' && <Clock className="w-3 h-3" />}
-                        {w.status === 'REJECTED' && <XCircle className="w-3 h-3" />}
-                        {w.status === 'APPROVED' ? 'PAID' : w.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          withdrawals.map((w) => {
+            const dateStr = new Date(w.createdAt).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            });
+            const timeStr = new Date(w.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            return (
+              <div
+                key={w.id}
+                className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3 shadow-2xs hover:border-slate-300 transition-all"
+              >
+                {/* Card Header */}
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                        w.gateway === 'EASYPAISA'
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                          : 'bg-amber-100 text-amber-900 border border-amber-300'
+                      }`}
+                    >
+                      {w.gateway}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      {dateStr} at {timeStr}
+                    </span>
+                  </div>
+
+                  {/* Status Badge */}
+                  <span
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                      w.status === 'APPROVED'
+                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        : w.status === 'REJECTED'
+                        ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                        : 'bg-amber-100 text-amber-900 border border-amber-300'
+                    }`}
+                  >
+                    {w.status === 'APPROVED' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                    {w.status === 'PENDING' && <Clock className="w-3.5 h-3.5 text-amber-600" />}
+                    {w.status === 'REJECTED' && <XCircle className="w-3.5 h-3.5 text-rose-600" />}
+                    {w.status === 'APPROVED' ? 'PAID' : w.status}
+                  </span>
+                </div>
+
+                {/* Card Main Info */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Payout Amount</span>
+                    <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 block">
+                      Rs. {Number(w.amount).toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Receiving Account</span>
+                    <p className="font-mono font-bold text-slate-900 text-xs mt-0.5">{w.accountNumber}</p>
+                    <p className="text-[11px] font-bold text-slate-600">{w.accountTitle}</p>
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Gateway</span>
+                    <p className="font-bold text-slate-800 text-xs mt-0.5">{w.gateway} Wallet</p>
+                  </div>
+                </div>
+
+                {/* Status Message & Reason Banner */}
+                {w.status === 'APPROVED' && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <p>
+                        Payout Transferred! Rs. {Number(w.amount).toLocaleString()} successfully sent to your {w.gateway} account ({w.accountNumber}) on{' '}
+                        <strong>{dateStr} ({timeStr})</strong>.
+                      </p>
+                      {w.adminNote && <p className="text-[11px] text-emerald-800 mt-0.5 font-bold">💬 Note: {w.adminNote}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {w.status === 'REJECTED' && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p>
+                        Withdrawal Request Rejected on <strong>{dateStr} ({timeStr})</strong>. Funds refunded back to wallet.
+                      </p>
+                      <p className="text-rose-800 text-[11px] mt-0.5 font-bold">
+                        Reason: {w.adminNote || 'Invalid account details or transfer failed.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {w.status === 'PENDING' && (
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      Cashout Under Review: Request submitted on <strong>{dateStr} ({timeStr})</strong>. Admin will process transfer to your {w.gateway} account shortly.
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
     </div>

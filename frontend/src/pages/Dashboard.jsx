@@ -45,14 +45,17 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(() => {
     return !localStorage.getItem('cached_plans') && !localStorage.getItem('cached_investments');
   });
+  const [recentAlerts, setRecentAlerts] = useState([]);
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimMessage, setClaimMessage] = useState({ text: '', type: '' });
 
   const fetchData = async () => {
     try {
-      const [plansRes, invRes] = await Promise.allSettled([
+      const [plansRes, invRes, depRes, withRes] = await Promise.allSettled([
         api.get('/plans'),
-        api.get('/plans/my-investments')
+        api.get('/plans/my-investments'),
+        api.get('/transactions/my-deposits'),
+        api.get('/transactions/my-withdrawals')
       ]);
 
       if (plansRes.status === 'fulfilled' && plansRes.value.data.success) {
@@ -64,6 +67,42 @@ const Dashboard = () => {
         setInvestments(invRes.value.data.investments);
         localStorage.setItem('cached_investments', JSON.stringify(invRes.value.data.investments));
       }
+
+      // Collect recent processed transactions for screen notification
+      const alerts = [];
+      if (depRes.status === 'fulfilled' && depRes.value.data.success) {
+        const recentDeps = (depRes.value.data.deposits || []).slice(0, 3);
+        recentDeps.forEach((d) => {
+          alerts.push({
+            type: 'DEPOSIT',
+            id: d.id,
+            status: d.status,
+            amount: d.amount,
+            gateway: d.gateway,
+            date: d.createdAt,
+            note: d.adminNote
+          });
+        });
+      }
+
+      if (withRes.status === 'fulfilled' && withRes.value.data.success) {
+        const recentWiths = (withRes.value.data.withdrawals || []).slice(0, 3);
+        recentWiths.forEach((w) => {
+          alerts.push({
+            type: 'WITHDRAWAL',
+            id: w.id,
+            status: w.status,
+            amount: w.amount,
+            gateway: w.gateway,
+            date: w.createdAt,
+            note: w.adminNote,
+            accountNumber: w.accountNumber
+          });
+        });
+      }
+
+      alerts.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setRecentAlerts(alerts.slice(0, 2));
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
@@ -106,6 +145,86 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-3.5 bg-white">
+      {/* Live Transaction Notifications (Approved / Rejected Status with Time & Reason) */}
+      {recentAlerts.length > 0 && (
+        <div className="space-y-2">
+          {recentAlerts.map((alt) => {
+            const dateStr = new Date(alt.date).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            });
+            const timeStr = new Date(alt.date).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            if (alt.status === 'APPROVED') {
+              return (
+                <div
+                  key={alt.id}
+                  className="p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs flex items-start justify-between gap-3 shadow-2xs"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-black text-emerald-900 text-xs">
+                        {alt.type === 'DEPOSIT'
+                          ? `✅ Deposit Approved: Rs. ${Number(alt.amount).toLocaleString()} credited to your balance!`
+                          : `✅ Withdrawal Paid: Rs. ${Number(alt.amount).toLocaleString()} sent to your ${alt.gateway} (${alt.accountNumber})!`}
+                      </p>
+                      <p className="text-[11px] text-emerald-800 font-semibold mt-0.5">
+                        Processed on <strong>{dateStr} ({timeStr})</strong> via {alt.gateway}
+                      </p>
+                      {alt.note && <p className="text-[10.5px] text-emerald-900 font-bold mt-0.5">💬 Note: {alt.note}</p>}
+                    </div>
+                  </div>
+                  <Link
+                    to={alt.type === 'DEPOSIT' ? '/deposit-history' : '/withdraw-history'}
+                    className="text-[10px] font-bold text-emerald-800 hover:underline shrink-0 bg-emerald-100 px-2 py-1 rounded-md"
+                  >
+                    View Details
+                  </Link>
+                </div>
+              );
+            }
+
+            if (alt.status === 'REJECTED') {
+              return (
+                <div
+                  key={alt.id}
+                  className="p-3 rounded-2xl bg-rose-50 border border-rose-300 text-rose-950 text-xs flex items-start justify-between gap-3 shadow-2xs"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-black text-rose-900 text-xs">
+                        {alt.type === 'DEPOSIT'
+                          ? `❌ Deposit Rejected: Rs. ${Number(alt.amount).toLocaleString()}`
+                          : `❌ Withdrawal Rejected & Refunded: Rs. ${Number(alt.amount).toLocaleString()}`}
+                      </p>
+                      <p className="text-[11px] text-rose-800 font-semibold mt-0.5">
+                        Rejected on <strong>{dateStr} ({timeStr})</strong>
+                      </p>
+                      <p className="text-[11px] text-rose-950 font-bold mt-0.5 bg-rose-100/80 px-2 py-0.5 rounded-md inline-block">
+                        ⚠️ Reason: {alt.note || 'Verification failed. Please contact support.'}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to={alt.type === 'DEPOSIT' ? '/deposit-history' : '/withdraw-history'}
+                    className="text-[10px] font-bold text-rose-800 hover:underline shrink-0 bg-rose-100 px-2 py-1 rounded-md"
+                  >
+                    View
+                  </Link>
+                </div>
+              );
+            }
+
+            return null;
+          })}
+        </div>
+      )}
       {/* Account Restriction Violation Alert Banner (If Restricted by Admin) */}
       {user?.isRestricted && (
         <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-start gap-2 shadow-xs">

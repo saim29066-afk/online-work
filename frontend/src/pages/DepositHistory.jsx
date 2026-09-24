@@ -73,81 +73,130 @@ const DepositHistory = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+      {/* Vertical Deposit Cards (No horizontal scroll) */}
+      <div className="space-y-3">
         {loading ? (
-          <div className="text-center py-8 text-slate-400 text-xs flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400 text-xs flex items-center justify-center gap-2 shadow-2xs">
+            <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
             <span>Loading deposit history...</span>
           </div>
         ) : deposits.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-xs font-medium">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs font-medium shadow-2xs">
             No deposits found. Click "New Deposit" to add funds.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
-                <tr>
-                  <th className="py-2.5 px-3">Date & Time</th>
-                  <th className="py-2.5 px-3">Gateway</th>
-                  <th className="py-2.5 px-3">Amount</th>
-                  <th className="py-2.5 px-3">Sender Info</th>
-                  <th className="py-2.5 px-3">Transaction ID</th>
-                  <th className="py-2.5 px-3 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-[11px]">
-                {deposits.map((dep) => (
-                  <tr key={dep.id} className="text-slate-700 hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-3.5 text-slate-500 text-[11px]">
-                      {new Date(dep.createdAt).toLocaleDateString()} <br />
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(dep.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3.5">
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          dep.gateway === 'EASYPAISA'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                            : 'bg-amber-100 text-amber-800 border border-amber-200'
-                        }`}
-                      >
-                        {dep.gateway}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3.5 font-black text-slate-900 text-sm">
-                      Rs. {dep.amount.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-3.5">
-                      <p className="font-bold text-slate-900">{dep.senderName}</p>
-                      <p className="text-[10px] text-slate-500 font-mono">{dep.senderNumber}</p>
-                    </td>
-                    <td className="py-3 px-3.5 font-mono font-bold text-slate-900 text-[11px]">
+          deposits.map((dep) => {
+            const dateStr = new Date(dep.createdAt).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            });
+            const timeStr = new Date(dep.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            return (
+              <div
+                key={dep.id}
+                className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3 shadow-2xs hover:border-slate-300 transition-all"
+              >
+                {/* Card Header */}
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                        dep.gateway === 'EASYPAISA'
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                          : dep.gateway === 'JAZZ_CASH' || dep.gateway === 'JAZZCASH'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-orange-100 text-orange-900 border border-orange-300'
+                      }`}
+                    >
+                      {dep.gateway}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      {dateStr} at {timeStr}
+                    </span>
+                  </div>
+
+                  {/* Status Badge */}
+                  <span
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                      dep.status === 'APPROVED'
+                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        : dep.status === 'REJECTED'
+                        ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                        : 'bg-amber-100 text-amber-900 border border-amber-300'
+                    }`}
+                  >
+                    {dep.status === 'APPROVED' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                    {dep.status === 'PENDING' && <Clock className="w-3.5 h-3.5 text-amber-600" />}
+                    {dep.status === 'REJECTED' && <XCircle className="w-3.5 h-3.5 text-rose-600" />}
+                    {dep.status}
+                  </span>
+                </div>
+
+                {/* Card Main Info */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Deposit Amount</span>
+                    <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 block">
+                      Rs. {Number(dep.amount).toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Transaction ID (TID)</span>
+                    <span className="text-xs font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 mt-0.5 inline-block">
                       {dep.transactionId}
-                    </td>
-                    <td className="py-3 px-3.5 text-right">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          dep.status === 'APPROVED'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                            : dep.status === 'REJECTED'
-                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                            : 'bg-amber-100 text-amber-800 border border-amber-300'
-                        }`}
-                      >
-                        {dep.status === 'APPROVED' && <CheckCircle2 className="w-3 h-3" />}
-                        {dep.status === 'PENDING' && <Clock className="w-3 h-3" />}
-                        {dep.status === 'REJECTED' && <XCircle className="w-3 h-3" />}
-                        {dep.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </span>
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Sender Details</span>
+                    <p className="font-bold text-slate-900 text-xs mt-0.5">{dep.senderName}</p>
+                    <p className="text-[11px] font-mono text-slate-600">{dep.senderNumber}</p>
+                  </div>
+                </div>
+
+                {/* Status Message & Reason Banner */}
+                {dep.status === 'APPROVED' && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      Deposit Approved! Rs. {Number(dep.amount).toLocaleString()} has been credited to your wallet on{' '}
+                      <strong>{dateStr} ({timeStr})</strong>.
+                    </span>
+                  </div>
+                )}
+
+                {dep.status === 'REJECTED' && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p>
+                        Deposit Rejected on <strong>{dateStr} ({timeStr})</strong>.
+                      </p>
+                      <p className="text-rose-800 text-[11px] mt-0.5 font-bold">
+                        Reason: {dep.adminNote || 'Invalid Transaction ID / Slip Verification Failed'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {dep.status === 'PENDING' && (
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      Deposit Under Review: Submitted on <strong>{dateStr} ({timeStr})</strong>. Admin will verify and credit your balance shortly.
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
     </div>
