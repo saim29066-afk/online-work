@@ -48,6 +48,7 @@ const Withdraw = () => {
   });
   const [feedback, setFeedback] = useState({ text: '', type: '' });
   const [inviteModal, setInviteModal] = useState({ open: false, message: '' });
+  const [planRequiredModal, setPlanRequiredModal] = useState({ open: false, message: '' });
 
   const currentBalance = user?.balance || 0;
   const referralCode = user?.referralCode || '';
@@ -108,6 +109,15 @@ const Withdraw = () => {
 
     const numAmount = parseInt(amount, 10);
 
+    // Check if user has purchased at least 1 plan before cashout
+    if (!tierInfo.hasPaidPlan) {
+      setPlanRequiredModal({
+        open: true,
+        message: 'Please activate at least 1 investment plan (Level 1 Bronze or higher) before requesting a withdrawal.'
+      });
+      return;
+    }
+
     if (tierInfo.pastCount === 0 && numAmount !== 500) {
       setFeedback({
         text: 'Please complete your 1st starter cashout of Rs. 500 first. Higher amounts will unlock afterwards.',
@@ -162,7 +172,12 @@ const Withdraw = () => {
       const errorData = err.response?.data;
       const errorMsg = errorData?.message || 'Withdrawal request failed. Please try again.';
 
-      if (errorData?.requiresInvite) {
+      if (errorData?.requiresPaidPlan) {
+        setPlanRequiredModal({
+          open: true,
+          message: errorMsg
+        });
+      } else if (errorData?.requiresInvite) {
         setInviteModal({
           open: true,
           message: errorMsg
@@ -194,26 +209,6 @@ const Withdraw = () => {
           </Link>
         }
       />
-
-      {/* Paid Plan Lockout Notice (If user only has Level 0 Free Plan) */}
-      {!tierInfo.hasPaidPlan && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 text-amber-950 space-y-2.5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-amber-700 shrink-0" />
-            <h4 className="font-black text-sm text-slate-900">Cashout Locked: Paid Plan Required</h4>
-          </div>
-          <p className="text-xs text-slate-700 leading-relaxed font-medium">
-            Aapne abhi tak koi Paid Plan (Level 1, Level 2, Level 3, Level 4) buy nahi kiya. Rs. 500 starter cashout aur baki tamam cashouts unlock karne ke liye pehle kam az kam <strong>Level 1 Bronze Plan (Rs. 1,000)</strong> buy karein.
-          </p>
-          <Link
-            to="/plans"
-            className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-sm transition-all"
-          >
-            <Zap className="w-4 h-4 fill-white" />
-            <span>Browse & Activate Level 1 Plan →</span>
-          </Link>
-        </div>
-      )}
 
       {/* Available Balance Card */}
       <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
@@ -408,16 +403,10 @@ const Withdraw = () => {
           ) : (
             <button
               type="submit"
-              disabled={loading || !tierInfo.hasPaidPlan}
-              className={`w-full py-3.5 px-4 mt-1 rounded-xl text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
-                !tierInfo.hasPaidPlan
-                  ? 'bg-slate-400 cursor-not-allowed opacity-80'
-                  : 'bg-emerald-600 hover:bg-emerald-700'
-              }`}
+              disabled={loading}
+              className="w-full py-3.5 px-4 mt-1 rounded-xl text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-98 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
             >
-              {!tierInfo.hasPaidPlan ? (
-                <span>🔒 Buy Level 1 Plan to Unlock Cashout</span>
-              ) : loading ? (
+              {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Processing Cashout Request...</span>
@@ -429,6 +418,48 @@ const Withdraw = () => {
           )}
         </form>
       </div>
+
+      {/* Plan Required Modal Popup when user clicks withdraw without paid plan */}
+      {planRequiredModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative text-xs space-y-4">
+            <button
+              onClick={() => setPlanRequiredModal({ open: false, message: '' })}
+              className="absolute right-4 top-4 p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-2 shadow-xs">
+                <Zap className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">Investment Plan Required</h3>
+              <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                {planRequiredModal.message || 'Please activate at least 1 investment plan (Level 1 Bronze or higher) before requesting a withdrawal.'}
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setPlanRequiredModal({ open: false, message: '' })}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+              >
+                Close
+              </button>
+              <Link
+                to="/plans"
+                onClick={() => setPlanRequiredModal({ open: false, message: '' })}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs text-center transition-colors shadow-xs flex items-center justify-center gap-1.5"
+              >
+                <Zap className="w-3.5 h-3.5 fill-white" />
+                <span>Browse & Activate Plan</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invite Friend Modal Popup when withdrawal is locked */}
       {inviteModal.open && (
@@ -470,12 +501,13 @@ const Withdraw = () => {
                 </button>
               </div>
               <p className="text-[10px] text-amber-800 pt-0.5">
-                💡 Tip: Share this link with your friends. You will get <strong className="font-bold">50% instant cash bonus</strong> when they buy any plan!
+                💡 Tip: Share this link with your friends to earn instant cash commissions on their activated plans!
               </p>
             </div>
 
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setInviteModal({ open: false, message: '' })}
                 className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors"
               >

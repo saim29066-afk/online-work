@@ -129,7 +129,7 @@ model PaymentSetting {
   upaisaStatus          String   @default("ACTIVE") // "ACTIVE", "UNDER_MAINTENANCE", "COMING_SOON"
   upaisaNotice          String?  @default("")
 
-  minWithdrawal         Float    @default(800.0)
+  minWithdrawal         Float    @default(500.0)
   minInvitesForWithdraw Int      @default(2)
   supportWhatsapp       String   @default("+923451234567")
   supportEmail          String   @default("support@studentinvest.pk")

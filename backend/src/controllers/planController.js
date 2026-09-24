@@ -92,7 +92,7 @@ const buyPlan = async (req, res) => {
         return res.status(400).json({
           success: false,
           requiresDeposit: true,
-          message: 'Plan buy karne ke liye kam az kam 1 Deposit approved hona zaroori hai! Referral bonus se plan buy karne ke liye pehle khud kam az kam 1 deposit karein.'
+          message: 'At least 1 approved deposit is required to activate paid plans. Please submit a deposit to purchase a plan.'
         });
       }
 

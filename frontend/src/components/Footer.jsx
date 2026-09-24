@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-white border-t border-slate-200 pt-8 pb-20 lg:pb-8 text-slate-500 text-xs mt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
@@ -16,7 +16,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-slate-500 max-w-sm text-[11px] leading-relaxed">
-              Pakistan's trusted investment & earning platform for college & university students. Guaranteed daily bonus payouts and instant 50% referral commissions.
+              Pakistan's trusted investment & earning platform for college & university students. Guaranteed daily bonus payouts and instant referral commissions.
             </p>
             <div className="mt-3 flex items-center gap-2">
               <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold text-[10px] flex items-center gap-1">
@@ -35,16 +35,6 @@ const Footer = () => {
               <p>• JazzCash (Mobilink Microfinance)</p>
               <p>• Manual TID Slip Verification</p>
             </div>
-          </div>
-
-          <div>
-            <h4 className="text-slate-900 font-bold text-[11px] tracking-wider uppercase mb-2">Student Rules</h4>
-            <ul className="space-y-1 text-[11px] text-slate-500">
-              <li>• Rs. 150 Free Welcome Bonus on Signup</li>
-              <li>• Minimum Withdrawal: Rs. 800</li>
-              <li>• 1 Friend Invite required to unlock withdraw</li>
-              <li>• 50% instant referral commission on any plan</li>
-            </ul>
           </div>
         </div>
 
