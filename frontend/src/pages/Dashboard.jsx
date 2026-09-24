@@ -117,7 +117,7 @@ const Dashboard = () => {
               🎓 Student Investor
             </span>
             <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-200">
-              🎁 Rs. 250 Free Bonus Credited
+              🎁 Rs. 150 Free Bonus Credited
             </span>
             <span className="text-xs text-slate-600">
               Ref: <strong className="font-mono text-slate-900 font-bold">{user?.referralCode}</strong>

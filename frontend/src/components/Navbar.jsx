@@ -299,7 +299,7 @@ const Navbar = () => {
                   className="px-3 py-1.5 font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-xs transition-all flex items-center gap-1"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  Register (+Rs.250 Free)
+                  Register (+Rs.150 Free)
                 </Link>
               </div>
             )}

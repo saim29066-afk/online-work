@@ -22,7 +22,7 @@ async function main() {
       minInvitesForWithdraw: 1,
       supportWhatsapp: '+923451234567',
       supportEmail: 'support@studentinvest.pk',
-      noticeText: '🎉 Welcome Students! Level 0 Free Plan (Rs. 50/day) + Rs. 250 Signup Bonus active!'
+      noticeText: '🎉 Welcome Students! Level 0 Free Plan (Rs. 35/day) + Rs. 150 Signup Bonus active!'
     }
   });
 
@@ -51,14 +51,14 @@ async function main() {
       id: 0,
       name: 'Level 0 Free Starter',
       price: 0.0,
-      dailyBonus: 50.0,
+      dailyBonus: 35.0,
       durationDays: 30,
       referralBonusPercent: 0.0,
       badge: 'Free for All Students',
-      description: 'Free starter plan activated on registration. Earn Rs. 50 daily free profit.',
+      description: 'Free starter plan activated on registration. Earn Rs. 35 daily free profit.',
       features: JSON.stringify([
-        'Rs. 50 Daily Free Guaranteed Bonus',
-        'Total Return: Rs. 1,500',
+        'Rs. 35 Daily Free Guaranteed Bonus',
+        'Total Return: Rs. 1,050',
         'Validity: 30 Days',
         'Free Activation (Rs. 0)',
         'Reach Rs. 800 & buy Level 1 to cashout'

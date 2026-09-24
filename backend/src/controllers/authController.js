@@ -87,7 +87,7 @@ const register = async (req, res) => {
     }
 
     const myReferralCode = fastReferralCode();
-    const signupBonus = 250.0;
+    const signupBonus = 150.0;
 
     const result = await prisma.user.create({
       data: {
@@ -115,7 +115,7 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Congratulations! Rs. 250 Free Welcome Bonus has been credited to your account! Activate your plan from the dashboard.',
+      message: 'Congratulations! Rs. 150 Free Welcome Bonus has been credited to your account! Activate your plan from the dashboard.',
       token,
       user: result
     });

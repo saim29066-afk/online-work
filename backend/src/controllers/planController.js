@@ -74,7 +74,7 @@ const buyPlan = async (req, res) => {
       if (alreadyHasFreePlan) {
         return res.status(400).json({
           success: false,
-          message: 'Level 0 Free Starter Plan is already active on your account! You are already receiving Rs. 50/day.'
+          message: `Level 0 Free Starter Plan is already active on your account! You are already receiving Rs. ${plan.dailyBonus}/day.`
         });
       }
     } else {

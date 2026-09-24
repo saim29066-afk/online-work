@@ -5,31 +5,42 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
   });
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    // If no token exists, immediately ready (not loading)
+    return !!localStorage.getItem('token') && !localStorage.getItem('user');
+  });
 
-  // Fetch updated user data on boot
+  // Fetch updated user data on boot in background (SWR style)
   useEffect(() => {
+    let isMounted = true;
     const checkAuth = async () => {
       if (token) {
         try {
           const res = await api.get('/auth/me');
-          if (res.data.success) {
+          if (res.data.success && isMounted) {
             setUser(res.data.user);
             localStorage.setItem('user', JSON.stringify(res.data.user));
           }
         } catch (error) {
           console.error('Session validation error:', error);
-          logout();
+          if (isMounted) logout();
         }
       }
-      setLoading(false);
+      if (isMounted) setLoading(false);
     };
 
     checkAuth();
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
   const login = async (phoneOrEmail, password) => {

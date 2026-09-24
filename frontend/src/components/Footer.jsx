@@ -40,7 +40,7 @@ const Footer = () => {
           <div>
             <h4 className="text-slate-900 font-bold text-[11px] tracking-wider uppercase mb-2">Student Rules</h4>
             <ul className="space-y-1 text-[11px] text-slate-500">
-              <li>• Rs. 250 Free Welcome Bonus on Signup</li>
+              <li>• Rs. 150 Free Welcome Bonus on Signup</li>
               <li>• Minimum Withdrawal: Rs. 800</li>
               <li>• 1 Friend Invite required to unlock withdraw</li>
               <li>• 50% instant referral commission on any plan</li>

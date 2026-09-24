@@ -16,7 +16,7 @@ const getGatewayInfo = async (req, res) => {
           minInvitesForWithdraw: 2,
           supportWhatsapp: '+923451234567',
           supportEmail: 'support@studentinvest.pk',
-          noticeText: '🎉 Welcome Students! Level 0 Free Plan (Rs. 50/day) + Rs. 250 Signup Bonus active!'
+          noticeText: '🎉 Welcome Students! Level 0 Free Plan (Rs. 35/day) + Rs. 150 Signup Bonus active!'
         }
       });
     }

@@ -14,7 +14,7 @@ const NoticeBanner = () => {
           setNotice(res.data.settings.noticeText);
         }
       } catch (err) {
-        setNotice('🎉 Welcome Students! Rs. 250 Free Bonus on new account + 50% instant referral bonus!');
+        setNotice('🎉 Welcome Students! Rs. 150 Free Bonus on new account + 50% instant referral bonus!');
       }
     };
     fetchNotice();

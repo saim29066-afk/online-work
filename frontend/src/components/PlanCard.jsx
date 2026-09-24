@@ -63,19 +63,19 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
   return (
     <>
       <div
-        className={`relative rounded-xl p-2.5 sm:p-3 transition-all flex flex-col justify-between bg-white border ${
+        className={`relative rounded-2xl p-3.5 sm:p-4 transition-all flex flex-col justify-between bg-white border ${
           isPopular
-            ? 'border-emerald-400 shadow-xs ring-1 ring-emerald-400/20'
-            : 'border-slate-200 shadow-2xs hover:border-slate-300'
+            ? 'border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+            : 'border-slate-200 shadow-xs hover:border-slate-300'
         }`}
       >
         {plan.badge && (
-          <div className="absolute -top-2 left-2.5">
+          <div className="absolute -top-2.5 left-3.5">
             <span
-              className={`px-1.5 py-0.2 rounded-full text-[7.5px] sm:text-[8px] font-bold tracking-wider uppercase shadow-2xs ${
+              className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider uppercase shadow-xs ${
                 isPopular
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+                  : 'bg-slate-800 text-white border border-slate-700'
               }`}
             >
               {plan.badge}
@@ -85,48 +85,48 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
 
         <div>
           {/* Title & Price Header */}
-          <div className="flex items-start justify-between gap-1.5 mt-0.5 mb-1.5">
+          <div className="flex items-start justify-between gap-2 mt-1 mb-2.5">
             <div>
-              <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">{plan.name}</h3>
-              <span className="text-[9px] text-slate-500">{plan.durationDays} Days Duration</span>
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">{plan.name}</h3>
+              <span className="text-xs text-slate-500 font-medium">{plan.durationDays} Days Duration</span>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-xs sm:text-[13px] font-black text-slate-900 block">
+              <span className="text-sm sm:text-base font-black text-slate-900 block">
                 Rs. {plan.price.toLocaleString()}
               </span>
             </div>
           </div>
 
-          {/* Daily & Total Return Box (Compact) */}
-          <div className="bg-slate-50/80 border border-slate-200/80 rounded-lg p-1.5 mb-1.5 flex items-center justify-between text-[9.5px]">
+          {/* Daily & Total Return Box (Clear & Bold) */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 mb-2.5 flex items-center justify-between text-xs">
             <div>
-              <span className="text-slate-500 block text-[8.5px] leading-tight">Daily Profit:</span>
-              <span className="font-bold text-emerald-700 flex items-center gap-0.5">
-                <Zap className="w-2.5 h-2.5 fill-emerald-600 text-emerald-600" />
+              <span className="text-slate-500 block text-[11px] font-medium leading-tight mb-0.5">Daily Profit:</span>
+              <span className="font-black text-emerald-700 text-xs sm:text-sm flex items-center gap-1">
+                <Zap className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
                 Rs. {plan.dailyBonus}/day
               </span>
             </div>
             <div className="text-right">
-              <span className="text-slate-500 block text-[8.5px] leading-tight">Total Return:</span>
-              <span className="font-bold text-slate-800">
+              <span className="text-slate-500 block text-[11px] font-medium leading-tight mb-0.5">Total Return:</span>
+              <span className="font-black text-slate-900 text-xs sm:text-sm">
                 Rs. {totalReturn.toLocaleString()}
               </span>
             </div>
           </div>
 
-          {/* 50% Referral Chip (Compact) */}
-          <div className="mb-1.5 bg-amber-50/80 border border-amber-200/70 rounded-md px-1.5 py-0.5 flex items-center justify-between text-[9px]">
-            <span className="text-amber-800 font-semibold flex items-center gap-0.5 text-[8.5px]">
-              <Sparkles className="w-2.5 h-2.5 text-amber-600" /> 50% Invite Bonus:
+          {/* 50% Referral Chip (Clear & Prominent) */}
+          <div className="mb-2.5 bg-amber-50 border border-amber-200 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-xs">
+            <span className="text-amber-900 font-bold flex items-center gap-1 text-[11px]">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" /> 50% Invite Bonus:
             </span>
-            <span className="font-bold text-amber-900 text-[9px]">Rs. {referralBonusAmount}</span>
+            <span className="font-black text-amber-950 text-xs">Rs. {referralBonusAmount}</span>
           </div>
 
-          {/* Compact Feature Bullet */}
-          <div className="space-y-0.5 mb-2">
-            {(Array.isArray(plan.features) ? plan.features.slice(0, 2) : []).map((feat, idx) => (
-              <div key={idx} className="flex items-center gap-1 text-[9px] text-slate-600">
-                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+          {/* Feature Bullet */}
+          <div className="space-y-1 mb-3">
+            {(Array.isArray(plan.features) ? plan.features.slice(0, 3) : []).map((feat, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 text-xs text-slate-700">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span className="truncate">{feat}</span>
               </div>
             ))}
@@ -135,14 +135,14 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
 
         {/* Action Button */}
         {user?.isRestricted ? (
-          <div className="w-full py-1.5 px-2 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-bold text-[9px] text-center flex items-center justify-center gap-1">
-            <AlertCircle className="w-2.5 h-2.5 text-rose-600" />
+          <div className="w-full py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs text-center flex items-center justify-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
             <span>Account Restricted</span>
           </div>
         ) : (
           <button
             onClick={handleBuyClick}
-            className={`w-full py-1.5 px-2 rounded-lg font-bold text-[10.5px] sm:text-[11px] transition-all flex items-center justify-center gap-1 shadow-xs active:scale-98 ${
+            className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-98 ${
               plan.price === 0
                 ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs'
                 : isPopular
@@ -151,7 +151,7 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
             }`}
           >
             <span>{plan.price === 0 ? 'Activate Free (Rs. 0)' : 'Buy Plan'}</span>
-            <ArrowRight className="w-2.5 h-2.5" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         )}
       </div>

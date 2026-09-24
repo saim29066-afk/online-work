@@ -40,10 +40,10 @@ const Home = () => {
     <div className="space-y-10 py-6 sm:py-10 bg-white">
       {/* Hero Section */}
       <section className="text-center max-w-3xl mx-auto px-4">
-        {/* Rs. 250 Free Signup Badge */}
+        {/* Rs. 150 Free Signup Badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold mb-4">
           <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Rs. 250 Free Welcome Bonus on New Signup!</span>
+          <span>Rs. 150 Free Welcome Bonus on New Signup!</span>
         </div>
 
         {/* Hero Title */}
@@ -62,14 +62,14 @@ const Home = () => {
             to="/register"
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
           >
-            <span>Register & Get Rs. 250 Free</span>
+            <span>Register & Get Rs. 150 Free</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             to="/login"
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs border border-slate-300 transition-colors flex items-center justify-center"
           >
-            Sign In to Dashboard
+            Sign In
           </Link>
         </div>
 
@@ -139,7 +139,7 @@ const Home = () => {
             </div>
             <h3 className="text-[11px] font-bold text-slate-900 mb-0.5">Register Account</h3>
             <p className="text-[9.5px] text-slate-500 leading-tight">
-              Sign up in 30 seconds and receive instant Rs. 250 welcome bonus.
+              Sign up in 30 seconds and receive instant Rs. 150 welcome bonus.
             </p>
           </div>
 
