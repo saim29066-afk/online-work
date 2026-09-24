@@ -26,29 +26,46 @@ import {
 
 const Dashboard = () => {
   const { user, refreshUser } = useAuth();
-  const [investments, setInvestments] = useState([]);
-  const [availablePlans, setAvailablePlans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [investments, setInvestments] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_investments');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [availablePlans, setAvailablePlans] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_plans');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    return !localStorage.getItem('cached_plans') && !localStorage.getItem('cached_investments');
+  });
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimMessage, setClaimMessage] = useState({ text: '', type: '' });
 
   const fetchData = async () => {
     try {
-      const plansRes = await api.get('/plans');
-      if (plansRes.data.success && Array.isArray(plansRes.data.plans)) {
-        setAvailablePlans(plansRes.data.plans);
-      }
-    } catch (err) {
-      console.error('Failed to load plans:', err);
-    }
+      const [plansRes, invRes] = await Promise.allSettled([
+        api.get('/plans'),
+        api.get('/plans/my-investments')
+      ]);
 
-    try {
-      const invRes = await api.get('/plans/my-investments');
-      if (invRes.data.success && Array.isArray(invRes.data.investments)) {
-        setInvestments(invRes.data.investments);
+      if (plansRes.status === 'fulfilled' && plansRes.value.data.success) {
+        setAvailablePlans(plansRes.value.data.plans);
+        localStorage.setItem('cached_plans', JSON.stringify(plansRes.value.data.plans));
+      }
+
+      if (invRes.status === 'fulfilled' && invRes.value.data.success) {
+        setInvestments(invRes.value.data.investments);
+        localStorage.setItem('cached_investments', JSON.stringify(invRes.value.data.investments));
       }
     } catch (err) {
-      console.error('Failed to load investments:', err);
+      console.error('Failed to load dashboard data:', err);
     } finally {
       setLoading(false);
     }

@@ -4,14 +4,24 @@ import PlanCard from '../components/PlanCard';
 import { Sparkles, ShieldCheck, Zap, Users, Loader2 } from 'lucide-react';
 
 const Plans = () => {
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [plans, setPlans] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_plans');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    return !localStorage.getItem('cached_plans');
+  });
 
   const fetchPlans = async () => {
     try {
       const res = await api.get('/plans');
-      if (res.data.success) {
+      if (res.data.success && Array.isArray(res.data.plans)) {
         setPlans(res.data.plans);
+        localStorage.setItem('cached_plans', JSON.stringify(res.data.plans));
       }
     } catch (err) {
       console.error('Failed to load plans:', err);

@@ -64,11 +64,67 @@ const Deposit = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleFileChange = (e) => {
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      // If small file (< 100KB), no need to compress
+      if (!file || file.size <= 100 * 1024) {
+        resolve(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressed = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                  type: 'image/jpeg',
+                  lastModified: Date.now()
+                });
+                resolve(compressed);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            0.82
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setScreenshot(file);
       setPreviewUrl(URL.createObjectURL(file));
+      const optimized = await compressImage(file);
+      setScreenshot(optimized);
     }
   };
 
@@ -95,13 +151,16 @@ const Deposit = () => {
     setLoading(true);
 
     try {
+      // Ensure screenshot is compressed for lightning-fast sub-second upload
+      const fileToSend = await compressImage(screenshot);
+
       const formData = new FormData();
       formData.append('gateway', gateway);
       formData.append('amount', amount);
       formData.append('senderNumber', cleanSender);
       formData.append('senderName', senderName);
       formData.append('transactionId', transactionId);
-      formData.append('screenshot', screenshot);
+      formData.append('screenshot', fileToSend);
 
       const res = await api.post('/transactions/deposit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }

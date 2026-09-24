@@ -1,9 +1,17 @@
 const prisma = require('../prisma');
 
-// @desc Get all available plans
+let cachedPlansData = null;
+let lastPlansFetchTime = 0;
+
+// @desc Get all available plans (Sub-millisecond cached)
 // @route GET /api/plans
 const getPlans = async (req, res) => {
   try {
+    const now = Date.now();
+    if (cachedPlansData && (now - lastPlansFetchTime < 30000)) {
+      return res.status(200).json({ success: true, plans: cachedPlansData });
+    }
+
     const plans = await prisma.plan.findMany({
       where: { isActive: true },
       orderBy: { price: 'asc' }
@@ -21,6 +29,9 @@ const getPlans = async (req, res) => {
         features: parsedFeatures
       };
     });
+
+    cachedPlansData = parsedPlans;
+    lastPlansFetchTime = now;
 
     return res.status(200).json({ success: true, plans: parsedPlans });
   } catch (error) {
@@ -45,24 +56,22 @@ const buyPlan = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid plan ID' });
     }
 
-    const plan = await prisma.plan.findUnique({
-      where: { id: planIdNum }
-    });
+    // Parallel fetch plan, user, and approved deposit count in a single concurrent round-trip
+    const [plan, user, approvedDepositCount] = await Promise.all([
+      prisma.plan.findUnique({ where: { id: planIdNum } }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          investments: { where: { status: 'ACTIVE' } },
+          referredBy: true
+        }
+      }),
+      prisma.deposit.count({ where: { userId, status: 'APPROVED' } })
+    ]);
 
     if (!plan || !plan.isActive) {
       return res.status(404).json({ success: false, message: 'Investment plan not found or currently unavailable' });
     }
-
-    // Get fresh user with referredBy info & active investments
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        investments: {
-          where: { status: 'ACTIVE' }
-        },
-        referredBy: true
-      }
-    });
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
@@ -79,13 +88,6 @@ const buyPlan = async (req, res) => {
       }
     } else {
       // For paid plans: Check if user has made at least 1 approved deposit
-      const approvedDepositCount = await prisma.deposit.count({
-        where: {
-          userId,
-          status: 'APPROVED'
-        }
-      });
-
       if (approvedDepositCount === 0 && (user.totalDeposited || 0) <= 0) {
         return res.status(400).json({
           success: false,
