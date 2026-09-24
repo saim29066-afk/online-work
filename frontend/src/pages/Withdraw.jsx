@@ -77,15 +77,6 @@ const Withdraw = () => {
     fetchTierInfo();
   }, []);
 
-  useEffect(() => {
-    if (feedback.text) {
-      const timer = setTimeout(() => {
-        setFeedback({ text: '', type: '' });
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [feedback.text]);
-
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
     setCopied(true);
@@ -236,18 +227,34 @@ const Withdraw = () => {
 
         {feedback.text && (
           <div
-            className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+            className={`p-3.5 rounded-xl text-xs flex items-start justify-between gap-2.5 font-semibold ${
               feedback.type === 'success'
-                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                : 'bg-rose-50 border border-rose-200 text-rose-800'
+                ? 'bg-emerald-50 border-2 border-emerald-300 text-emerald-950 shadow-xs'
+                : 'bg-rose-50 border-2 border-rose-300 text-rose-950 shadow-xs'
             }`}
           >
-            {feedback.type === 'success' ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-            )}
-            <span className="font-semibold">{feedback.text}</span>
+            <div className="flex items-start gap-2.5">
+              {feedback.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              )}
+              <div>
+                <p className="font-bold">{feedback.text}</p>
+                {feedback.type === 'success' && (
+                  <p className="text-[11px] text-emerald-800 font-medium mt-0.5">
+                    Your cashout request is submitted and under verification. Funds will be sent to your account shortly.
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFeedback({ text: '', type: '' })}
+              className="text-slate-400 hover:text-slate-700 p-0.5 shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 

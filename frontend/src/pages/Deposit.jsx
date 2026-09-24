@@ -58,15 +58,6 @@ const Deposit = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (feedback.text) {
-      const timer = setTimeout(() => {
-        setFeedback({ text: '', type: '' });
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [feedback.text]);
-
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -386,18 +377,34 @@ const Deposit = () => {
 
             {feedback.text && (
               <div
-                className={`p-3 rounded-xl text-xs flex items-center gap-2.5 font-semibold ${
+                className={`p-3.5 rounded-xl text-xs flex items-start justify-between gap-2.5 font-semibold ${
                   feedback.type === 'success'
-                    ? 'bg-emerald-50 border border-emerald-300 text-emerald-900'
-                    : 'bg-rose-50 border border-rose-300 text-rose-900'
+                    ? 'bg-emerald-50 border-2 border-emerald-300 text-emerald-950 shadow-xs'
+                    : 'bg-rose-50 border-2 border-rose-300 text-rose-950 shadow-xs'
                 }`}
               >
-                {feedback.type === 'success' ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                )}
-                <span>{feedback.text}</span>
+                <div className="flex items-start gap-2.5">
+                  {feedback.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <p className="font-bold">{feedback.text}</p>
+                    {feedback.type === 'success' && (
+                      <p className="text-[11px] text-emerald-800 font-medium mt-0.5">
+                        Your deposit verification request has been submitted. It will be verified by administration shortly.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFeedback({ text: '', type: '' })}
+                  className="text-slate-400 hover:text-slate-700 p-0.5 shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
 
