@@ -21,7 +21,8 @@ import {
   Loader2,
   Gift,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -68,41 +69,61 @@ const Dashboard = () => {
         localStorage.setItem('cached_investments', JSON.stringify(invRes.value.data.investments));
       }
 
-      // Collect recent processed transactions for screen notification
-      const alerts = [];
+      // Collect recent processed transactions for screen notification (Only UNSEEN items)
+      let seenAlertIds = [];
+      try {
+        seenAlertIds = JSON.parse(localStorage.getItem('seen_transaction_alerts') || '[]');
+      } catch {
+        seenAlertIds = [];
+      }
+
+      const unseenAlerts = [];
       if (depRes.status === 'fulfilled' && depRes.value.data.success) {
         const recentDeps = (depRes.value.data.deposits || []).slice(0, 3);
         recentDeps.forEach((d) => {
-          alerts.push({
-            type: 'DEPOSIT',
-            id: d.id,
-            status: d.status,
-            amount: d.amount,
-            gateway: d.gateway,
-            date: d.createdAt,
-            note: d.adminNote
-          });
+          if ((d.status === 'APPROVED' || d.status === 'REJECTED') && !seenAlertIds.includes(d.id)) {
+            unseenAlerts.push({
+              type: 'DEPOSIT',
+              id: d.id,
+              status: d.status,
+              amount: d.amount,
+              gateway: d.gateway,
+              date: d.createdAt,
+              note: d.adminNote
+            });
+          }
         });
       }
 
       if (withRes.status === 'fulfilled' && withRes.value.data.success) {
         const recentWiths = (withRes.value.data.withdrawals || []).slice(0, 3);
         recentWiths.forEach((w) => {
-          alerts.push({
-            type: 'WITHDRAWAL',
-            id: w.id,
-            status: w.status,
-            amount: w.amount,
-            gateway: w.gateway,
-            date: w.createdAt,
-            note: w.adminNote,
-            accountNumber: w.accountNumber
-          });
+          if ((w.status === 'APPROVED' || w.status === 'REJECTED') && !seenAlertIds.includes(w.id)) {
+            unseenAlerts.push({
+              type: 'WITHDRAWAL',
+              id: w.id,
+              status: w.status,
+              amount: w.amount,
+              gateway: w.gateway,
+              date: w.createdAt,
+              note: w.adminNote,
+              accountNumber: w.accountNumber
+            });
+          }
         });
       }
 
-      alerts.sort((a, b) => new Date(b.date) - new Date(a.date));
-      setRecentAlerts(alerts.slice(0, 2));
+      unseenAlerts.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const latestUnseen = unseenAlerts.slice(0, 1); // Only show the single latest processed notification
+      setRecentAlerts(latestUnseen);
+
+      if (latestUnseen.length > 0) {
+        // Mark as seen permanently in localStorage so it never repeats across logouts / reloads
+        try {
+          const updatedSeen = [...seenAlertIds, ...latestUnseen.map((a) => a.id)];
+          localStorage.setItem('seen_transaction_alerts', JSON.stringify(updatedSeen.slice(-50)));
+        } catch {}
+      }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
@@ -114,6 +135,16 @@ const Dashboard = () => {
     fetchData();
     refreshUser();
   }, []);
+
+  // Automatically dismiss the popup notification after 5 seconds
+  useEffect(() => {
+    if (recentAlerts.length > 0) {
+      const timer = setTimeout(() => {
+        setRecentAlerts([]);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [recentAlerts]);
 
   const handleClaimDaily = async () => {
     setClaimLoading(true);
@@ -179,12 +210,21 @@ const Dashboard = () => {
                       {alt.note && <p className="text-[10.5px] text-emerald-900 font-bold mt-0.5">💬 Note: {alt.note}</p>}
                     </div>
                   </div>
-                  <Link
-                    to={alt.type === 'DEPOSIT' ? '/deposit-history' : '/withdraw-history'}
-                    className="text-[10px] font-bold text-emerald-800 hover:underline shrink-0 bg-emerald-100 px-2 py-1 rounded-md"
-                  >
-                    View Details
-                  </Link>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Link
+                      to={alt.type === 'DEPOSIT' ? '/deposit-history' : '/withdraw-history'}
+                      className="text-[10px] font-bold text-emerald-800 hover:underline bg-emerald-100 px-2 py-1 rounded-md"
+                    >
+                      View Details
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setRecentAlerts([])}
+                      className="text-emerald-700 hover:text-emerald-950 p-1 rounded-lg hover:bg-emerald-100"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             }
@@ -211,12 +251,21 @@ const Dashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <Link
-                    to={alt.type === 'DEPOSIT' ? '/deposit-history' : '/withdraw-history'}
-                    className="text-[10px] font-bold text-rose-800 hover:underline shrink-0 bg-rose-100 px-2 py-1 rounded-md"
-                  >
-                    View
-                  </Link>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Link
+                      to={alt.type === 'DEPOSIT' ? '/deposit-history' : '/withdraw-history'}
+                      className="text-[10px] font-bold text-rose-800 hover:underline bg-rose-100 px-2 py-1 rounded-md"
+                    >
+                      View
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setRecentAlerts([])}
+                      className="text-rose-700 hover:text-rose-950 p-1 rounded-lg hover:bg-rose-100"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             }
