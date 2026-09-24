@@ -1,6 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
-const prisma = new PrismaClient();
+const prisma = require('../src/prisma');
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -68,14 +67,14 @@ async function main() {
       id: 1,
       name: 'Level 1 Bronze Starter',
       price: 1000.0,
-      dailyBonus: 250.0,
+      dailyBonus: 200.0,
       durationDays: 50,
       referralBonusPercent: 50.0,
       badge: 'Popular Beginner',
-      description: 'Unlock full withdrawals and earn Rs. 250 daily returns for 50 days.',
+      description: 'Unlock full withdrawals and earn Rs. 200 daily returns for 50 days.',
       features: JSON.stringify([
-        'Rs. 250 Daily Guaranteed Bonus',
-        'Total Return: Rs. 12,500',
+        'Rs. 200 Daily Guaranteed Bonus',
+        'Total Return: Rs. 10,000',
         'Validity: 50 Days',
         '50% Referral Commission (Rs. 500)',
         'Unlocks EasyPaisa / JazzCash Cashout'
@@ -85,14 +84,14 @@ async function main() {
       id: 2,
       name: 'Level 2 Silver Scholar',
       price: 2500.0,
-      dailyBonus: 500.0,
+      dailyBonus: 400.0,
       durationDays: 50,
       referralBonusPercent: 50.0,
       badge: 'High Earner',
-      description: 'Accelerate your earnings with Rs. 500 daily profit for 50 days.',
+      description: 'Accelerate your earnings with Rs. 400 daily profit for 50 days.',
       features: JSON.stringify([
-        'Rs. 500 Daily Guaranteed Bonus',
-        'Total Return: Rs. 25,000',
+        'Rs. 400 Daily Guaranteed Bonus',
+        'Total Return: Rs. 20,000',
         'Validity: 50 Days',
         '50% Referral Commission (Rs. 1,250)',
         'Priority EasyPaisa / JazzCash Cashout'
