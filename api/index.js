@@ -10,4 +10,6 @@ if (!process.env.DIRECT_URL) {
 
 const app = require('../backend/src/server');
 
-module.exports = app;
+module.exports = (req, res) => {
+  return app(req, res);
+};
