@@ -31,7 +31,10 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (error) {
           console.error('Session validation error:', error);
-          if (isMounted) logout();
+          // Only logout if token is explicitly invalid or user was deleted from DB (HTTP 401)
+          if (error.response?.status === 401 && isMounted) {
+            logout();
+          }
         }
       }
       if (isMounted) setLoading(false);

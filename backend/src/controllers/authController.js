@@ -5,7 +5,7 @@ const prisma = require('../prisma');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'student_invest_super_secret_jwt_key_2026_xyz', {
-    expiresIn: '30d'
+    expiresIn: '365d'
   });
 };
 
