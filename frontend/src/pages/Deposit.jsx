@@ -310,7 +310,7 @@ const Deposit = () => {
             <div className="relative border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-4 text-center cursor-pointer bg-slate-50 transition-colors">
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/*,image/jpeg,image/png,image/webp"
                 onChange={handleFileChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />

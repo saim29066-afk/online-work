@@ -81,7 +81,7 @@ const submitDeposit = async (req, res) => {
       });
     }
 
-    const screenshotUrl = `/uploads/${req.file.filename}`;
+    const screenshotUrl = req.file.dataUri || `/uploads/${req.file.filename}`;
 
     const deposit = await prisma.deposit.create({
       data: {

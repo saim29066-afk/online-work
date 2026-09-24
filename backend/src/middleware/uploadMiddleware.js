@@ -4,8 +4,12 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 const uploadDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (e) {
+  // Read-only filesystem in Serverless environment - ignore
 }
 
 // 1. Strip EXIF GPS metadata & Tracking Tags from JPEG
@@ -156,17 +160,26 @@ const secureUploadMiddleware = (req, res, next) => {
       const originalExt = path.extname(req.file.originalname).toLowerCase();
       const { sanitizedBuffer, ext } = sanitizeAndVerifyImage(req.file.buffer, originalExt);
 
-      // Generate cryptographically secure randomized filename (no user trace in filename)
+      // Generate cryptographically secure randomized filename
       const randomHex = crypto.randomBytes(16).toString('hex');
       const filename = `proof-${Date.now()}-${randomHex}${ext}`;
-      const filePath = path.join(uploadDir, filename);
+      
+      const mimeType = (ext === '.jpg' || ext === '.jpeg') ? 'image/jpeg' : ext === '.webp' ? 'image/webp' : 'image/png';
+      const base64Data = `data:${mimeType};base64,${sanitizedBuffer.toString('base64')}`;
 
-      fs.writeFileSync(filePath, sanitizedBuffer);
-
-      // Attach sanitized file metadata to req.file
+      // Attach base64 data URI to req.file (works 100% on Serverless/Vercel)
+      req.file.dataUri = base64Data;
       req.file.filename = filename;
-      req.file.path = filePath;
       req.file.size = sanitizedBuffer.length;
+
+      // Best effort local disk save (ignores EROFS on Vercel)
+      try {
+        const filePath = path.join(uploadDir, filename);
+        fs.writeFileSync(filePath, sanitizedBuffer);
+        req.file.path = filePath;
+      } catch (fsErr) {
+        // Serverless read-only environment - dataUri will be used directly
+      }
 
       next();
     } catch (sanitizationErr) {
