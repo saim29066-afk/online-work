@@ -17,6 +17,8 @@ const fastReferralCode = () => {
     code += chars.charAt(randBytes[i] % chars.length);
   }
   return code;
+};
+
 const sanitizePhone = (raw) => {
   if (!raw) return '';
   let digits = String(raw).trim().replace(/\D/g, '');
