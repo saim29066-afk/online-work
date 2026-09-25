@@ -565,9 +565,9 @@ const updateSettings = async (req, res) => {
           upaisaTitle: upaisaTitle || 'Muhammad Ali (Admin)',
           upaisaStatus: upaisaStatus || 'ACTIVE',
           upaisaNotice: upaisaNotice || '',
-          minWithdrawal: minWithdrawal ? parseFloat(minWithdrawal) : 800,
+          minWithdrawal: minWithdrawal ? parseFloat(minWithdrawal) : 500,
           minInvitesForWithdraw: minInvitesForWithdraw ? parseInt(minInvitesForWithdraw) : 1,
-          supportWhatsapp: supportWhatsapp || '+923451234567',
+          supportWhatsapp: supportWhatsapp || '03218956397',
           supportEmail: supportEmail || 'support@studentinvest.pk',
           noticeText: noticeText || '🎉 Welcome Students!'
         }

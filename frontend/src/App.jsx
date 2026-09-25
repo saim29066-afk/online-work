@@ -26,6 +26,7 @@ import ReferralHistory from './pages/ReferralHistory';
 import Support from './pages/Support';
 import MyTickets from './pages/MyTickets';
 import Profile from './pages/Profile';
+import PromoVideo from './pages/PromoVideo';
 
 // Admin Pages (Strictly protected with AdminRoute)
 import AdminDashboard from './pages/Admin/AdminDashboard';
@@ -70,6 +71,7 @@ function AppRoutes() {
           {/* Public Student Pages */}
           <Route path="/" element={<Home />} />
           <Route path="/plans" element={<Plans />} />
+          <Route path="/promo" element={<PromoVideo />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/support" element={<Support />} />

@@ -131,7 +131,7 @@ model PaymentSetting {
 
   minWithdrawal         Float    @default(500.0)
   minInvitesForWithdraw Int      @default(2)
-  supportWhatsapp       String   @default("+923451234567")
+  supportWhatsapp       String   @default("03218956397")
   supportEmail          String   @default("support@studentinvest.pk")
   noticeText            String   @default("🎉 Welcome Students! Level 0 Free Plan (Rs. 35/day) + Rs. 150 Signup Bonus active!")
   updatedAt             DateTime @updatedAt

@@ -16,7 +16,7 @@ const getGatewayInfo = async (req, res) => {
           upaisaTitle: 'Muhammad Ali (Admin)',
           minWithdrawal: 500,
           minInvitesForWithdraw: 2,
-          supportWhatsapp: '+923451234567',
+          supportWhatsapp: '03218956397',
           supportEmail: 'support@studentinvest.pk',
           noticeText: '🎉 Welcome Students! Level 0 Free Plan (Rs. 35/day) + Rs. 150 Signup Bonus active!'
         }

@@ -73,8 +73,11 @@ const Support = () => {
     }
   };
 
-  const whatsappNumber = settings?.supportWhatsapp || '+923451234567';
-  const cleanWhatsapp = whatsappNumber.replace(/[^0-9]/g, '');
+  const whatsappNumber = settings?.supportWhatsapp || '03218956397';
+  let cleanWhatsapp = whatsappNumber.replace(/[^0-9]/g, '');
+  if (cleanWhatsapp.startsWith('03')) {
+    cleanWhatsapp = '92' + cleanWhatsapp.substring(1);
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-5 space-y-4">
