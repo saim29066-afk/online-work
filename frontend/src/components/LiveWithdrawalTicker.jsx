@@ -27,6 +27,8 @@ const BASE_LIVE_STREAM = [
 
 const LiveWithdrawalTicker = () => {
   const [items, setItems] = useState(BASE_LIVE_STREAM);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
     const fetchLivePayouts = async () => {
@@ -36,19 +38,33 @@ const LiveWithdrawalTicker = () => {
           setItems([...res.data.payouts, ...BASE_LIVE_STREAM]);
         }
       } catch (err) {
-        // Fallback to default
+        // Fallback to base
       }
     };
     fetchLivePayouts();
   }, []);
 
-  const marqueeItems = [...items, ...items];
+  // Naturally transition every 6.5 seconds so it looks authentic and realistic
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % items.length);
+        setIsFading(false);
+      }, 400); // 400ms smooth fade transition
+    }, 6500);
+
+    return () => clearInterval(timer);
+  }, [items.length]);
+
+  const currentItem = items[currentIndex] || items[0];
+  const nextItem = items[(currentIndex + 1) % items.length] || items[1];
 
   return (
-    <div className="bg-slate-900 text-slate-300 border-y border-slate-800 py-1 select-none overflow-hidden">
-      <div className="flex items-center">
+    <div className="bg-slate-900 text-slate-200 border-b border-slate-800 py-1.5 select-none overflow-hidden transition-colors">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 flex items-center justify-between gap-2">
         {/* Fixed Live Indicator Badge */}
-        <div className="shrink-0 flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white font-bold text-[10px] tracking-wider uppercase shadow-xs z-10">
+        <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-600/90 text-white font-black text-[10px] tracking-wider uppercase shadow-xs">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
@@ -56,30 +72,36 @@ const LiveWithdrawalTicker = () => {
           <span>Live Payouts</span>
         </div>
 
-        {/* 24/7 Infinite Seamless Streaming Marquee */}
-        <div className="flex overflow-hidden whitespace-nowrap w-full">
-          <div className="animate-infinite-ticker flex items-center gap-3 text-[11px] font-medium py-0.5">
-            {marqueeItems.map((item, idx) => (
-              <div
-                key={idx}
-                className="inline-flex items-center gap-1.5 bg-slate-800 px-3 py-1 rounded-full border border-slate-700/80 shadow-2xs shrink-0"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-                <span className="font-mono text-slate-200 font-bold">{item.phone}</span>
-                <span className="text-slate-400 font-normal">cashed out</span>
-                <span className="font-bold text-emerald-400">Rs. {Number(item.amount).toLocaleString()}</span>
-                <span
-                  className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                    item.gateway === 'EasyPaisa'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  }`}
-                >
-                  {item.gateway}
-                </span>
-              </div>
-            ))}
+        {/* Natural Timed Withdrawal Notification Card */}
+        <div className="flex-1 flex items-center justify-center overflow-hidden">
+          <div
+            className={`flex items-center gap-2 text-[11px] sm:text-xs font-medium transition-all duration-400 transform ${
+              isFading ? 'opacity-0 -translate-y-1.5' : 'opacity-100 translate-y-0'
+            }`}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></div>
+            <span className="font-mono text-slate-100 font-bold tracking-tight">{currentItem.phone}</span>
+            <span className="text-slate-400 hidden xs:inline">received</span>
+            <span className="font-black text-emerald-400">Rs. {Number(currentItem.amount).toLocaleString()}</span>
+            <span
+              className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded shrink-0 ${
+                currentItem.gateway === 'EasyPaisa'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              }`}
+            >
+              {currentItem.gateway}
+            </span>
+            <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">
+              ({currentItem.time || 'Just now'})
+            </span>
           </div>
+        </div>
+
+        {/* Real-time Status Counter */}
+        <div className="hidden md:flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Automatic 24/7 Processing</span>
         </div>
       </div>
     </div>
