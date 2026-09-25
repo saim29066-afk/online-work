@@ -48,17 +48,25 @@ const LiveWithdrawalTicker = () => {
     fetchLivePayouts();
   }, []);
 
-  // Cycle smoothly every 7 seconds with realistic fade transition
+  // Cycle smoothly with dynamic randomized intervals (5s, 7s, 10s, 12s)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % items.length);
-        setFade(true);
-      }, 400);
-    }, 6500);
+    let timeoutId;
+    const randomDelays = [5000, 7500, 10000, 6000, 12000, 8000, 9500];
 
-    return () => clearInterval(interval);
+    const cycleNext = () => {
+      const delay = randomDelays[Math.floor(Math.random() * randomDelays.length)];
+      timeoutId = setTimeout(() => {
+        setFade(false);
+        setTimeout(() => {
+          setCurrentIndex((prev) => (prev + 1) % items.length);
+          setFade(true);
+          cycleNext();
+        }, 400);
+      }, delay);
+    };
+
+    cycleNext();
+    return () => clearTimeout(timeoutId);
   }, [items.length]);
 
   const currentItem = items[currentIndex] || items[0];

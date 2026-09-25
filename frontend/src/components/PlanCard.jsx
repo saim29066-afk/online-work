@@ -45,7 +45,7 @@ const PlanCard = ({ plan, onPlanPurchased, userInvestments }) => {
       return;
     }
     if (isPlanActive) {
-      setErrorMsg(`Aapka "${plan.name}" pehle se ACTIVE hai! Muddat mukammal hone tak dobara buy nahi kiya ja sakta.`);
+      setErrorMsg(`Your "${plan.name}" is already ACTIVE! You can purchase it again after the current ${plan.durationDays}-day term completes.`);
       return;
     }
     setErrorMsg('');
