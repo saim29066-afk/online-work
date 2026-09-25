@@ -30,16 +30,34 @@ const Register = () => {
     }
   }, [searchParams]);
 
+  const sanitizePhone = (val) => {
+    if (!val) return '';
+    let digits = String(val).trim().replace(/\D/g, '');
+    if (digits.startsWith('0092')) {
+      digits = '0' + digits.slice(4);
+    } else if (digits.startsWith('92') && digits.length >= 11) {
+      digits = '0' + digits.slice(2);
+    } else if (digits.length === 10 && digits.startsWith('3')) {
+      digits = '0' + digits;
+    }
+    return digits;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !phone || !password) {
-      setError('Name, phone number, and password are required.');
+    if (!name.trim() || !phone.trim() || !password) {
+      setError('Please provide your full name, mobile number, and password.');
       return;
     }
 
-    const cleanPhone = phone.trim().replace(/\D/g, '');
+    const cleanPhone = sanitizePhone(phone);
     if (cleanPhone.length !== 11 || !cleanPhone.startsWith('03')) {
-      setError('Please enter a valid 11-digit Pakistani mobile number (e.g. 03XXXXXXXXX)');
+      setError('Please enter a valid 11-digit mobile number (e.g. 03001234567)');
+      return;
+    }
+
+    if (password.length < 4) {
+      setError('Password must be at least 4 characters long.');
       return;
     }
 
@@ -60,7 +78,7 @@ const Register = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please check your inputs.');
+      setError(err.response?.data?.message || 'Registration failed. Please check your details.');
     } finally {
       setLoading(false);
     }
@@ -126,10 +144,17 @@ const Register = () => {
                 <input
                   type="tel"
                   required
-                  maxLength={11}
+                  maxLength={15}
                   placeholder="03XXXXXXXXX (11 digits)"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length > 11) {
+                      setPhone(sanitizePhone(val).slice(0, 11));
+                    } else {
+                      setPhone(val);
+                    }
+                  }}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>

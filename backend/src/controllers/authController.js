@@ -17,23 +17,41 @@ const fastReferralCode = () => {
     code += chars.charAt(randBytes[i] % chars.length);
   }
   return code;
+const sanitizePhone = (raw) => {
+  if (!raw) return '';
+  let digits = String(raw).trim().replace(/\D/g, '');
+  if (digits.startsWith('0092')) {
+    digits = '0' + digits.slice(4);
+  } else if (digits.startsWith('92') && digits.length >= 11) {
+    digits = '0' + digits.slice(2);
+  } else if (digits.length === 10 && digits.startsWith('3')) {
+    digits = '0' + digits;
+  }
+  return digits;
 };
 
-// @desc Register user with Rs. 250 Free Welcome Bonus + Level 0 Free Plan
+// @desc Register user with Rs. 150 Free Welcome Bonus
 // @route POST /api/auth/register
 const register = async (req, res) => {
   try {
     const { name, phone, email, password, referralCode } = req.body;
 
     if (!name || !phone || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide name, phone number, and password' });
+      return res.status(400).json({ success: false, message: 'Please provide your full name, mobile number, and password' });
     }
 
-    const cleanPhone = phone.trim().replace(/\D/g, '');
+    const cleanPhone = sanitizePhone(phone);
     if (cleanPhone.length !== 11 || !cleanPhone.startsWith('03')) {
       return res.status(400).json({
         success: false,
-        message: 'Please enter a valid 11-digit Pakistani mobile number (e.g. 03001234567)'
+        message: 'Please enter a valid Pakistani mobile number (e.g. 03001234567)'
+      });
+    }
+
+    if (String(password).length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 4 characters long'
       });
     }
 
@@ -53,7 +71,7 @@ const register = async (req, res) => {
     if (rawRef.includes('ref=')) {
       rawRef = rawRef.split('ref=')[1].split('&')[0].trim();
     }
-    const cleanRefPhone = rawRef.replace(/\D/g, '');
+    const cleanRefPhone = sanitizePhone(rawRef);
 
     if (rawRef) {
       checkPromises.push(
@@ -80,10 +98,10 @@ const register = async (req, res) => {
     const [existingPhone, existingEmail, referrer] = dbChecks;
 
     if (existingPhone) {
-      return res.status(400).json({ success: false, message: 'An account with this phone number already exists' });
+      return res.status(400).json({ success: false, message: 'An account with this mobile number already exists. Please log in.' });
     }
     if (existingEmail) {
-      return res.status(400).json({ success: false, message: 'This email is already registered' });
+      return res.status(400).json({ success: false, message: 'This email is already registered.' });
     }
 
     const myReferralCode = fastReferralCode();
@@ -115,13 +133,13 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Congratulations! Rs. 150 Free Welcome Bonus has been credited to your account! Activate your plan from the dashboard.',
+      message: 'Account created successfully! Rs. 150 Free Welcome Bonus has been credited.',
       token,
       user: result
     });
   } catch (error) {
     console.error('Registration error:', error);
-    return res.status(500).json({ success: false, message: 'Registration failed. Server error.' });
+    return res.status(500).json({ success: false, message: 'Registration failed. Server error. Please try again.' });
   }
 };
 
@@ -132,17 +150,18 @@ const login = async (req, res) => {
     const { phoneOrEmail, password } = req.body;
 
     if (!phoneOrEmail || !password) {
-      return res.status(400).json({ success: false, message: 'Please enter phone/email and password' });
+      return res.status(400).json({ success: false, message: 'Please enter your mobile number and password' });
     }
 
     const cleanInput = phoneOrEmail.trim();
-    const cleanPhone = cleanInput.replace(/\D/g, '');
+    const cleanPhone = sanitizePhone(cleanInput);
 
     const user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: cleanInput.toLowerCase() },
-          ...(cleanPhone ? [{ phone: cleanPhone }] : [{ phone: cleanInput }]),
+          ...(cleanPhone ? [{ phone: cleanPhone }] : []),
+          { phone: cleanInput },
           ...(cleanInput.toLowerCase() === 'admin' ? [{ email: 'admin@studentinvest.pk' }] : [])
         ]
       },
@@ -164,7 +183,7 @@ const login = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials. User not found.' });
+      return res.status(401).json({ success: false, message: 'Account not found. Please check your mobile number or register.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

@@ -11,33 +11,35 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handlePhoneOrEmailChange = (e) => {
-    let val = e.target.value;
-    // If the input starts with digits (e.g. phone number 03...), restrict strictly to max 11 digits
-    if (/^\d+$/.test(val)) {
-      val = val.slice(0, 11);
+  const sanitizePhone = (val) => {
+    if (!val) return '';
+    let digits = String(val).trim().replace(/\D/g, '');
+    if (digits.startsWith('0092')) {
+      digits = '0' + digits.slice(4);
+    } else if (digits.startsWith('92') && digits.length >= 11) {
+      digits = '0' + digits.slice(2);
+    } else if (digits.length === 10 && digits.startsWith('3')) {
+      digits = '0' + digits;
     }
-    setPhoneOrEmail(val);
+    return digits;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!phoneOrEmail || !password) {
-      setError('Please fill in both fields');
+    if (!phoneOrEmail.trim() || !password) {
+      setError('Please fill in both mobile number and password');
       return;
     }
 
-    // If user entered numbers (phone), ensure it is 11 digits
-    if (/^\d+$/.test(phoneOrEmail) && phoneOrEmail.length !== 11) {
-      setError('Mobile number must be exactly 11 digits (e.g. 03XXXXXXXXX)');
-      return;
-    }
+    const cleanInput = phoneOrEmail.trim();
+    const cleanPhone = sanitizePhone(cleanInput);
+    const identifier = (cleanPhone.length === 11 && cleanPhone.startsWith('03')) ? cleanPhone : cleanInput;
 
     setLoading(true);
     setError('');
 
     try {
-      const data = await login(phoneOrEmail, password);
+      const data = await login(identifier, password);
       if (data.success) {
         if (data.user.role === 'ADMIN') {
           navigate('/admin');
@@ -82,10 +84,10 @@ const Login = () => {
                 <input
                   type="text"
                   required
-                  maxLength={phoneOrEmail.includes('@') ? 100 : 11}
-                  placeholder="03XXXXXXXXX"
+                  maxLength={100}
+                  placeholder="03XXXXXXXXX or Email"
                   value={phoneOrEmail}
-                  onChange={handlePhoneOrEmailChange}
+                  onChange={(e) => setPhoneOrEmail(e.target.value)}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
