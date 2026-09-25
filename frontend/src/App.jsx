@@ -7,7 +7,6 @@ import Navbar from './components/Navbar';
 import LiveWithdrawalTicker from './components/LiveWithdrawalTicker';
 import MobileBottomNav from './components/MobileBottomNav';
 import Footer from './components/Footer';
-import NoticeBanner from './components/NoticeBanner';
 
 // Pages
 import Home from './pages/Home';
@@ -62,7 +61,6 @@ const AdminRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <NoticeBanner />
       <Navbar />
       <LiveWithdrawalTicker />
       

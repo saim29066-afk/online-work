@@ -7,8 +7,6 @@ import {
   Zap,
   ArrowDownLeft,
   ArrowUpRight,
-  Gift,
-  User,
   ShieldCheck,
   Users,
   Settings
@@ -25,50 +23,88 @@ const MobileBottomNav = () => {
     { path: '/admin/deposits', label: 'Deposits', icon: ArrowDownLeft },
     { path: '/admin/withdrawals', label: 'Cashouts', icon: ArrowUpRight },
     { path: '/admin/users', label: 'Students', icon: Users },
-    { path: '/admin/plans', label: 'Plans', icon: Layers },
-    { path: '/admin/settings', label: 'Settings', icon: Settings }
+    { path: '/admin/plans', label: 'Plans', icon: Layers }
   ];
 
   const studentNavItems = [
     { path: '/dashboard', label: 'Home', icon: LayoutDashboard },
-    { path: '/my-plans', label: 'My Plans', icon: Layers },
-    { path: '/daily-bonus', label: 'Claim', icon: Zap, highlight: true },
+    { path: '/my-plans', label: 'Plans', icon: Layers },
+    { path: '/daily-bonus', label: 'Claim', icon: Zap, isCenter: true },
     { path: '/deposit', label: 'Deposit', icon: ArrowDownLeft },
-    { path: '/withdraw', label: 'Withdraw', icon: ArrowUpRight },
-    { path: '/referrals', label: 'Invite', icon: Gift },
-    { path: '/profile', label: 'Me', icon: User }
+    { path: '/withdraw', label: 'Withdraw', icon: ArrowUpRight }
   ];
 
   const navItems = isAdmin ? adminNavItems : studentNavItems;
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg pb-safe">
-      <div className="flex items-center justify-around py-1 px-0.5">
+    <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t-2 border-slate-200 shadow-2xl pb-safe">
+      <div className="flex items-center justify-between px-2 py-1.5 max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
+
+          if (item.isCenter) {
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex flex-col items-center justify-center -mt-5 relative group px-2"
+              >
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${
+                    active
+                      ? 'bg-emerald-600 text-white ring-4 ring-emerald-100 shadow-emerald-600/30'
+                      : 'bg-emerald-500 hover:bg-emerald-600 text-white ring-4 ring-white shadow-emerald-500/20'
+                  }`}
+                >
+                  <Icon className="w-6 h-6 fill-white" />
+                </div>
+                <span
+                  className={`text-[11px] font-black mt-1 tracking-tight ${
+                    active ? 'text-emerald-700 font-extrabold' : 'text-slate-800'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          }
 
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center flex-1 py-1 px-0.5 rounded-lg transition-all ${
+              className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all ${
                 active
-                  ? isAdmin ? 'text-purple-700 font-black' : 'text-emerald-700 font-black'
-                  : 'text-slate-600 hover:text-slate-900 font-bold'
+                  ? isAdmin
+                    ? 'text-purple-950 font-black bg-purple-50'
+                    : 'text-emerald-950 font-black bg-emerald-50'
+                  : 'text-slate-700 hover:text-slate-900 font-bold'
               }`}
             >
               <div
-                className={`p-1 rounded-md transition-all ${
+                className={`p-1 rounded-lg transition-transform ${
                   active
-                    ? isAdmin ? 'bg-purple-100 text-purple-700 scale-105' : 'bg-emerald-100 text-emerald-700 scale-105'
-                    : ''
+                    ? isAdmin
+                      ? 'text-purple-700 scale-110'
+                      : 'text-emerald-600 scale-110'
+                    : 'text-slate-600'
                 }`}
               >
-                <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                <Icon className="w-5 h-5 stroke-[2.3]" />
               </div>
-              <span className="text-[9px] sm:text-[10px] mt-0.5 tracking-tight">{item.label}</span>
+              <span
+                className={`text-[11px] mt-0.5 tracking-tight font-black ${
+                  active
+                    ? isAdmin
+                      ? 'text-purple-900'
+                      : 'text-emerald-800'
+                    : 'text-slate-700'
+                }`}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}

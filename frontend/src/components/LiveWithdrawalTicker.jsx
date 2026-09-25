@@ -28,7 +28,7 @@ const BASE_LIVE_STREAM = [
 const LiveWithdrawalTicker = () => {
   const [items, setItems] = useState(BASE_LIVE_STREAM);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFading, setIsFading] = useState(false);
+  const [animPhase, setAnimPhase] = useState('active'); // 'active' | 'exit-left' | 'enter-right'
 
   useEffect(() => {
     const fetchLivePayouts = async () => {
@@ -44,21 +44,28 @@ const LiveWithdrawalTicker = () => {
     fetchLivePayouts();
   }, []);
 
-  // Naturally transition every 6.5 seconds so it looks authentic and realistic
+  // Smooth right-to-left slide transition every 7 seconds (6-8s)
   useEffect(() => {
     const timer = setInterval(() => {
-      setIsFading(true);
+      // 1. Slide current notification out to the left
+      setAnimPhase('exit-left');
+
       setTimeout(() => {
+        // 2. Load next notification and position it off-screen right
         setCurrentIndex((prev) => (prev + 1) % items.length);
-        setIsFading(false);
-      }, 400); // 400ms smooth fade transition
-    }, 6500);
+        setAnimPhase('enter-right');
+
+        // 3. Slide next notification smoothly in from the right to center
+        setTimeout(() => {
+          setAnimPhase('active');
+        }, 60);
+      }, 500); // 500ms slide-out
+    }, 7000); // 7s interval
 
     return () => clearInterval(timer);
   }, [items.length]);
 
   const currentItem = items[currentIndex] || items[0];
-  const nextItem = items[(currentIndex + 1) % items.length] || items[1];
 
   return (
     <div className="bg-slate-900 text-slate-200 border-b border-slate-800 py-1.5 select-none overflow-hidden transition-colors">
@@ -72,11 +79,15 @@ const LiveWithdrawalTicker = () => {
           <span>Live Payouts</span>
         </div>
 
-        {/* Natural Timed Withdrawal Notification Card */}
-        <div className="flex-1 flex items-center justify-center overflow-hidden">
+        {/* Natural Timed Withdrawal Notification Card (Slides Right to Left every 7 seconds) */}
+        <div className="flex-1 flex items-center justify-center overflow-hidden relative min-h-[26px]">
           <div
-            className={`flex items-center gap-2 text-[11px] sm:text-xs font-medium transition-all duration-400 transform ${
-              isFading ? 'opacity-0 -translate-y-1.5' : 'opacity-100 translate-y-0'
+            className={`flex items-center gap-2 text-[11px] sm:text-xs font-medium ${
+              animPhase === 'exit-left'
+                ? 'transition-all duration-500 ease-in-out transform -translate-x-full opacity-0 pointer-events-none'
+                : animPhase === 'enter-right'
+                ? 'transform translate-x-full opacity-0 pointer-events-none'
+                : 'transition-all duration-500 ease-out transform translate-x-0 opacity-100'
             }`}
           >
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></div>
