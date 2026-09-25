@@ -330,6 +330,82 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* 🌟 Ultra-Visible Daily Profit Collection Action Card */}
+      <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-500 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100 shadow-md relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
+              <Zap className="w-6 h-6 fill-white animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                  ⚡ Daily Collection
+                </span>
+                <span className="text-[11px] font-bold text-emerald-900 bg-emerald-200/70 px-2 py-0.5 rounded-full">
+                  {activePlans.length} Active {activePlans.length === 1 ? 'Plan' : 'Plans'}
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-slate-900">
+                Daily Bonus: <span className="text-emerald-700">Rs. {totalDailyProfit.toLocaleString()} / Day</span>
+              </h3>
+              <p className="text-xs text-slate-600 font-medium">
+                {activePlans.length > 0
+                  ? "Click collect button every 24 hours to credit your daily profit into wallet."
+                  : "Activate any student plan below to start collecting daily profit!"}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+            {activePlans.length > 0 ? (
+              <button
+                onClick={handleClaimDaily}
+                disabled={claimLoading || user?.isRestricted}
+                className="w-full sm:w-auto py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black text-sm shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {claimLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Collecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 fill-white" />
+                    <span>Collect Rs. {totalDailyProfit} Now</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <a
+                href="#student-plans"
+                className="w-full sm:w-auto py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md flex items-center justify-center gap-1.5 transition-all text-center"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Activate Plan to Collect</span>
+              </a>
+            )}
+          </div>
+        </div>
+
+        {claimMessage.text && (
+          <div
+            className={`mt-3 p-2.5 rounded-xl text-xs flex items-center gap-2 font-bold ${
+              claimMessage.type === 'success'
+                ? 'bg-emerald-200/90 text-emerald-950 border border-emerald-400'
+                : 'bg-amber-100 text-amber-900 border border-amber-300'
+            }`}
+          >
+            {claimMessage.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            ) : (
+              <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+            )}
+            <span>{claimMessage.text}</span>
+          </div>
+        )}
+      </div>
+
       {/* Main KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
         {/* Balance Card */}
@@ -381,58 +457,6 @@ const Dashboard = () => {
             Invite for 50% cash →
           </Link>
         </div>
-      </div>
-
-      {/* Daily Profit Collection Action Card */}
-      <div className="glass-card p-3.5 sm:p-4 rounded-2xl border border-emerald-200 bg-emerald-50/40 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
-        <div className="text-center sm:text-left">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-1 border border-emerald-200">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> 24h Guaranteed Payout
-          </div>
-          <h3 className="text-sm sm:text-base font-black text-slate-900">
-            Collect Today's Bonus (Rs. {totalDailyProfit})
-          </h3>
-          <p className="text-xs text-slate-600 mt-0.5 font-medium">
-            Click every 24 hours to credit your active plan daily profits into your wallet.
-          </p>
-
-          {claimMessage.text && (
-            <div
-              className={`mt-2 p-2 rounded-xl text-xs flex items-center gap-1.5 ${
-                claimMessage.type === 'success'
-                  ? 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-300'
-                  : 'bg-amber-100 text-amber-800 font-bold border border-amber-300'
-              }`}
-            >
-              {claimMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-              )}
-              <span>{claimMessage.text}</span>
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={handleClaimDaily}
-          disabled={claimLoading || activePlans.length === 0 || user?.isRestricted}
-          className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 shrink-0"
-        >
-          {claimLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Collecting...</span>
-            </>
-          ) : activePlans.length === 0 ? (
-            <span>No Active Plan</span>
-          ) : (
-            <>
-              <Zap className="w-4 h-4 fill-white" />
-              <span>Collect Daily Rs. {totalDailyProfit}</span>
-            </>
-          )}
-        </button>
       </div>
 
       {/* Investment Plans Section Directly on Dashboard */}
