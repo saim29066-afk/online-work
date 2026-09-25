@@ -108,6 +108,18 @@ const buyPlan = async (req, res) => {
 
     // Process Purchase inside a database transaction
     const result = await prisma.$transaction(async (tx) => {
+      // 0. Double-check duplicate active plan inside transaction lock
+      const existingInTx = await tx.userInvestment.findFirst({
+        where: {
+          userId,
+          planId: plan.id,
+          status: 'ACTIVE'
+        }
+      });
+      if (existingInTx) {
+        throw new Error(`Aapka "${plan.name}" pehle se ACTIVE hai! Yeh plan khatam hone par hi dobara buy kiya ja sakta hai.`);
+      }
+
       // 1. Deduct balance from buyer (if paid plan)
       let updatedUser;
       if (plan.price > 0) {

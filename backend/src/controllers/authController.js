@@ -214,6 +214,10 @@ const getMe = async (req, res) => {
             withdrawals: true
           }
         },
+        investments: {
+          where: { status: 'ACTIVE' },
+          include: { plan: true }
+        },
         referrals: {
           select: {
             id: true,

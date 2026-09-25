@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import confetti from 'canvas-confetti';
-import { CheckCircle2, Sparkles, Zap, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Sparkles, Zap, ArrowRight, AlertCircle, Loader2, Clock } from 'lucide-react';
 
-const PlanCard = ({ plan, onPlanPurchased }) => {
+const PlanCard = ({ plan, onPlanPurchased, userInvestments }) => {
   const { user, isAuthenticated, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -14,13 +14,38 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
   const [requiresDeposit, setRequiresDeposit] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimFeedback, setClaimFeedback] = useState('');
+
   const totalReturn = plan.dailyBonus * plan.durationDays;
   const roiPercent = Math.round((totalReturn / plan.price) * 100);
   const referralBonusAmount = (plan.price * (plan.referralBonusPercent / 100));
 
+  // Determine if this plan is currently ACTIVE for the logged in user
+  const activeInvestment = (() => {
+    try {
+      const planIdNum = Number(plan.id);
+      const invs = userInvestments || (user?.investments) || (() => {
+        const cached = localStorage.getItem('cached_investments');
+        return cached ? JSON.parse(cached) : [];
+      })();
+
+      return invs.find((i) => (Number(i.planId) === planIdNum || Number(i.plan?.id) === planIdNum) && i.status === 'ACTIVE');
+    } catch {
+      return null;
+    }
+  })();
+
+  const isPlanActive = Boolean(activeInvestment);
+  const isClaimable = activeInvestment ? (activeInvestment.isClaimable !== false) : false;
+
   const handleBuyClick = () => {
     if (!isAuthenticated) {
       navigate('/login');
+      return;
+    }
+    if (isPlanActive) {
+      setErrorMsg(`Aapka "${plan.name}" pehle se ACTIVE hai! Muddat mukammal hone tak dobara buy nahi kiya ja sakta.`);
       return;
     }
     setErrorMsg('');
@@ -58,24 +83,39 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
     }
   };
 
-  const isPopular = plan.badge?.toLowerCase().includes('popular');
+  const handleClaimIndividual = async (e) => {
+    e.stopPropagation();
+    if (!activeInvestment) return;
+    setClaimLoading(true);
+    setClaimFeedback('');
 
-  const isPlanActive = (() => {
     try {
-      const cached = localStorage.getItem('cached_investments');
-      const invs = cached ? JSON.parse(cached) : (user?.investments || []);
-      return invs.some((i) => i.planId === plan.id && i.status === 'ACTIVE');
-    } catch {
-      return false;
+      const res = await api.post(`/plans/claim-daily/${activeInvestment.id}`);
+      if (res.data.success) {
+        setClaimFeedback(res.data.message || `Rs. ${plan.dailyBonus} Collected!`);
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.6 }
+        });
+        await refreshUser();
+        if (onPlanPurchased) onPlanPurchased();
+      }
+    } catch (err) {
+      setClaimFeedback(err.response?.data?.message || 'Already collected today. Next after 24h.');
+    } finally {
+      setClaimLoading(false);
     }
-  })();
+  };
+
+  const isPopular = plan.badge?.toLowerCase().includes('popular');
 
   return (
     <>
       <div
         className={`relative rounded-2xl p-3.5 sm:p-4 transition-all flex flex-col justify-between bg-white border ${
           isPlanActive
-            ? 'border-teal-500 ring-2 ring-teal-500/20 shadow-xs'
+            ? 'border-emerald-500 ring-2 ring-emerald-500/30 shadow-md bg-emerald-50/20'
             : isPopular
             ? 'border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
             : 'border-slate-200 shadow-xs hover:border-slate-300'
@@ -83,8 +123,8 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
       >
         {isPlanActive ? (
           <div className="absolute -top-2.5 left-3.5">
-            <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider uppercase shadow-xs bg-teal-600 text-white flex items-center gap-1">
-              <CheckCircle2 className="w-2.5 h-2.5" /> ACTIVE PLAN
+            <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider uppercase shadow-xs bg-emerald-600 text-white flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> ACTIVE ({activeInvestment.daysClaimed}/{activeInvestment.durationDays} Days)
             </span>
           </div>
         ) : plan.badge ? (
@@ -151,16 +191,44 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
           </div>
         </div>
 
-        {/* Action Button */}
+        {/* Action Button: If Active, show Collect Option. Otherwise show Buy Plan */}
         {user?.isRestricted ? (
           <div className="w-full py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs text-center flex items-center justify-center gap-1.5">
             <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
             <span>Account Restricted</span>
           </div>
         ) : isPlanActive ? (
-          <div className="w-full py-2.5 px-3 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 font-bold text-xs text-center flex items-center justify-center gap-1.5 shadow-2xs">
-            <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
-            <span>Active Plan (In Progress)</span>
+          <div className="space-y-1.5">
+            {claimFeedback && (
+              <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-bold text-center">
+                {claimFeedback}
+              </div>
+            )}
+            {isClaimable ? (
+              <button
+                type="button"
+                onClick={handleClaimIndividual}
+                disabled={claimLoading}
+                className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-all disabled:opacity-50"
+              >
+                {claimLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Collecting Rs. {plan.dailyBonus}...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 fill-white text-white" />
+                    <span>⚡ Collect Rs. {plan.dailyBonus} Today</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="w-full py-2 px-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs text-center flex items-center justify-center gap-1.5 shadow-2xs">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Collected Today (Next in 24h)</span>
+              </div>
+            )}
           </div>
         ) : (
           <button
@@ -218,52 +286,53 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
             </div>
 
             {errorMsg && (
-              <div className="p-2 mb-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[10px] flex items-start gap-1.5">
+              <div className="p-2 mb-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] flex items-start gap-1.5 font-bold">
                 <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
-                <div>
-                  <p>{errorMsg}</p>
-                  {((user?.balance || 0) < plan.price || requiresDeposit) && (
-                    <button
-                      onClick={() => navigate('/deposit')}
-                      className="mt-1 text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
-                    >
-                      Deposit Funds via EasyPaisa / JazzCash <ArrowRight className="w-2.5 h-2.5" />
-                    </button>
-                  )}
-                </div>
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {requiresDeposit && (
+              <div className="p-2.5 mb-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-[11px] space-y-1.5">
+                <p className="font-bold">Deposit Required:</p>
+                <p>Please submit a deposit slip first to activate paid plans.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    navigate('/deposit');
+                  }}
+                  className="w-full py-1.5 px-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-2xs"
+                >
+                  <span>Go to Deposit Page</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
             )}
 
             {successMsg && (
-              <div className="p-2 mb-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] flex items-center gap-1">
+              <div className="p-2 mb-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] flex items-center gap-1.5 font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span>{successMsg}</span>
               </div>
             )}
 
-            <div className="flex gap-1.5 mt-2">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
                 disabled={loading}
-                className="flex-1 py-1.5 px-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-[11px] font-semibold"
+                className="flex-1 py-2 px-3 rounded-lg border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmPurchase}
-                disabled={loading || !!successMsg}
-                className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center gap-1 disabled:opacity-50"
+                disabled={loading || (plan.price > 0 && (user?.balance || 0) < plan.price)}
+                className="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-xs transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <span>Confirm</span>
-                )}
+                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Confirm Buy'}
               </button>
             </div>
           </div>

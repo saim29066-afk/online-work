@@ -541,7 +541,12 @@ const Dashboard = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {availablePlans.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} onPlanPurchased={fetchData} />
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                onPlanPurchased={fetchData}
+                userInvestments={investments}
+              />
             ))}
           </div>
         )}
