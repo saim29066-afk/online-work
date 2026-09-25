@@ -103,8 +103,12 @@ const Deposit = () => {
 
   const compressImage = (file) => {
     return new Promise((resolve) => {
-      // If small file (< 100KB), no need to compress
-      if (!file || file.size <= 100 * 1024) {
+      if (!file) {
+        resolve(null);
+        return;
+      }
+      // If small file (< 80KB), return as is
+      if (file.size <= 80 * 1024) {
         resolve(file);
         return;
       }
@@ -115,7 +119,7 @@ const Deposit = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const maxDim = 1200;
+          const maxDim = 900;
 
           if (width > maxDim || height > maxDim) {
             if (width > height) {
@@ -145,7 +149,7 @@ const Deposit = () => {
               }
             },
             'image/jpeg',
-            0.82
+            0.75
           );
         };
         img.onerror = () => resolve(file);
@@ -188,16 +192,13 @@ const Deposit = () => {
     setLoading(true);
 
     try {
-      // Ensure screenshot is compressed for lightning-fast sub-second upload
-      const fileToSend = await compressImage(screenshot);
-
       const formData = new FormData();
       formData.append('gateway', gateway);
       formData.append('amount', amount);
       formData.append('senderNumber', cleanSender);
-      formData.append('senderName', senderName);
-      formData.append('transactionId', transactionId);
-      formData.append('screenshot', fileToSend);
+      formData.append('senderName', senderName.trim());
+      formData.append('transactionId', transactionId.trim());
+      formData.append('screenshot', screenshot);
 
       const res = await api.post('/transactions/deposit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
