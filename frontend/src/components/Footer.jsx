@@ -40,7 +40,6 @@ const Footer = () => {
 
         <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400">
           <p>© 2026 Student Invest Hub. Built for Pakistani Students.</p>
-          <p className="mt-1 sm:mt-0">Fast • Reliable • Permanent Storage</p>
         </div>
       </div>
     </footer>
