@@ -24,7 +24,10 @@ const DEFAULT_PLANS = [
   { id: 5, name: 'Student Diamond', price: 12000, dailyBonus: 1200, durationDays: 50, referralBonusPercent: 50, badge: 'Diamond Elite', features: ['Daily Rs. 1,200 guaranteed return', '50 Days validity', '50% referral commission'] }
 ];
 
+import { useAuth } from '../context/AuthContext';
+
 const Home = () => {
+  const { isAuthenticated } = useAuth();
   const [plans, setPlans] = useState(() => {
     try {
       const cached = localStorage.getItem('cached_plans');
@@ -33,24 +36,44 @@ const Home = () => {
       return DEFAULT_PLANS;
     }
   });
+  const [investments, setInvestments] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_investments');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [loadingPlans, setLoadingPlans] = useState(false);
 
-  useEffect(() => {
-    const fetchHomePlans = async () => {
-      try {
-        const res = await api.get('/plans');
-        if (res.data.success && Array.isArray(res.data.plans)) {
-          setPlans(res.data.plans);
-          try {
-            localStorage.setItem('cached_plans', JSON.stringify(res.data.plans));
-          } catch {}
-        }
-      } catch (err) {
-        console.error('Failed to load home plans:', err);
+  const fetchHomeData = async () => {
+    try {
+      const promises = [api.get('/plans')];
+      if (isAuthenticated) {
+        promises.push(api.get('/plans/my-investments'));
       }
-    };
-    fetchHomePlans();
-  }, []);
+      const [resPlans, resInvs] = await Promise.all(promises);
+
+      if (resPlans.data.success && Array.isArray(resPlans.data.plans)) {
+        setPlans(resPlans.data.plans);
+        try {
+          localStorage.setItem('cached_plans', JSON.stringify(resPlans.data.plans));
+        } catch {}
+      }
+      if (resInvs && resInvs.data.success && Array.isArray(resInvs.data.investments)) {
+        setInvestments(resInvs.data.investments);
+        try {
+          localStorage.setItem('cached_investments', JSON.stringify(resInvs.data.investments));
+        } catch {}
+      }
+    } catch (err) {
+      console.error('Failed to load home plans:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchHomeData();
+  }, [isAuthenticated]);
 
   return (
     <div className="space-y-10 py-6 sm:py-10 bg-white">
@@ -133,7 +156,12 @@ const Home = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
             {plans.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} />
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                onPlanPurchased={fetchHomeData}
+                userInvestments={investments}
+              />
             ))}
           </div>
         )}

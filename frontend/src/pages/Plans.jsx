@@ -3,10 +3,21 @@ import api from '../services/api';
 import PlanCard from '../components/PlanCard';
 import { Sparkles, ShieldCheck, Zap, Users, Loader2 } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 const Plans = () => {
+  const { isAuthenticated } = useAuth();
   const [plans, setPlans] = useState(() => {
     try {
       const cached = localStorage.getItem('cached_plans');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [investments, setInvestments] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_investments');
       return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
@@ -16,23 +27,32 @@ const Plans = () => {
     return !localStorage.getItem('cached_plans');
   });
 
-  const fetchPlans = async () => {
+  const fetchData = async () => {
     try {
-      const res = await api.get('/plans');
-      if (res.data.success && Array.isArray(res.data.plans)) {
-        setPlans(res.data.plans);
-        localStorage.setItem('cached_plans', JSON.stringify(res.data.plans));
+      const promises = [api.get('/plans')];
+      if (isAuthenticated) {
+        promises.push(api.get('/plans/my-investments'));
+      }
+      const [resPlans, resInvs] = await Promise.all(promises);
+
+      if (resPlans.data.success && Array.isArray(resPlans.data.plans)) {
+        setPlans(resPlans.data.plans);
+        localStorage.setItem('cached_plans', JSON.stringify(resPlans.data.plans));
+      }
+      if (resInvs && resInvs.data.success && Array.isArray(resInvs.data.investments)) {
+        setInvestments(resInvs.data.investments);
+        localStorage.setItem('cached_investments', JSON.stringify(resInvs.data.investments));
       }
     } catch (err) {
-      console.error('Failed to load plans:', err);
+      console.error('Failed to load plans or investments:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPlans();
-  }, []);
+    fetchData();
+  }, [isAuthenticated]);
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
@@ -58,7 +78,12 @@ const Plans = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {plans.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} onPlanPurchased={fetchPlans} />
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              onPlanPurchased={fetchData}
+              userInvestments={investments}
+            />
           ))}
         </div>
       )}

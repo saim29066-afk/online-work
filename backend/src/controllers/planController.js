@@ -242,7 +242,7 @@ const getMyInvestments = async (req, res) => {
           isClaimable = true;
         } else {
           const diffHours = (now - new Date(inv.lastClaimedAt)) / (1000 * 60 * 60);
-          if (diffHours >= 20) {
+          if (diffHours >= 24) {
             isClaimable = true;
           }
         }
@@ -297,11 +297,11 @@ const claimDailyProfit = async (req, res) => {
     const claimableIds = [];
 
     for (const inv of activeInvestments) {
-      // Check if 24 hours (or at least same calendar day / 20 hours) have passed since last claim
+      // Check if strictly 24 hours have passed since last claim
       if (inv.lastClaimedAt) {
         const diffHours = (now - new Date(inv.lastClaimedAt)) / (1000 * 60 * 60);
-        if (diffHours < 20) {
-          continue; // Already claimed today
+        if (diffHours < 24) {
+          continue; // Already claimed in last 24h
         }
       }
 
@@ -393,7 +393,7 @@ const claimIndividualPlanProfit = async (req, res) => {
     const now = new Date();
     if (inv.lastClaimedAt) {
       const diffHours = (now - new Date(inv.lastClaimedAt)) / (1000 * 60 * 60);
-      if (diffHours < 20) {
+      if (diffHours < 24) {
         const remainingHours = Math.ceil(24 - diffHours);
         return res.status(400).json({
           success: false,

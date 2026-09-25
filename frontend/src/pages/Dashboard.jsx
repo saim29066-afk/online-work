@@ -181,7 +181,7 @@ const Dashboard = () => {
     if (inv.isClaimable !== undefined) return inv.isClaimable;
     if (!inv.lastClaimedAt) return true;
     const diffHours = (Date.now() - new Date(inv.lastClaimedAt).getTime()) / (1000 * 60 * 60);
-    return diffHours >= 20;
+    return diffHours >= 24;
   };
 
   const claimablePlans = activePlans.filter(isClaimable);
