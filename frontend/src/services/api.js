@@ -19,7 +19,12 @@ const API_URL = getBaseUrl();
 
 const api = axios.create({
   baseURL: API_URL ? `${API_URL}/api` : '/api',
+  timeout: 15000
 });
+
+// Fast In-Memory Cache for GET queries (TTL: 10s)
+const memoryCache = new Map();
+const inFlightRequests = new Map();
 
 // Auto-attach JWT token
 api.interceptors.request.use(

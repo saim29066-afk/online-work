@@ -18,8 +18,17 @@ import {
 
 const DailyBonus = () => {
   const { user, refreshUser } = useAuth();
-  const [investments, setInvestments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [investments, setInvestments] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_investments');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    return !localStorage.getItem('cached_investments');
+  });
   const [claimLoading, setClaimLoading] = useState(false);
   const [feedback, setFeedback] = useState({ text: '', type: '' });
 
@@ -28,6 +37,9 @@ const DailyBonus = () => {
       const res = await api.get('/plans/my-investments');
       if (res.data.success) {
         setInvestments(res.data.investments);
+        try {
+          localStorage.setItem('cached_investments', JSON.stringify(res.data.investments));
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to load investments:', err);

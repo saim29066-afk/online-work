@@ -39,12 +39,26 @@ const Withdraw = () => {
   const [accountTitle, setAccountTitle] = useState('');
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [tierLoading, setTierLoading] = useState(true);
-  const [tierInfo, setTierInfo] = useState({
-    pastCount: 0,
-    defaultSelectedAmount: 500,
-    qualifiedReferralsCount: 0,
-    hasPaidPlan: true
+  const [tierInfo, setTierInfo] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_withdraw_tier');
+      return cached ? JSON.parse(cached) : {
+        pastCount: 0,
+        defaultSelectedAmount: 500,
+        qualifiedReferralsCount: 0,
+        hasPaidPlan: true
+      };
+    } catch {
+      return {
+        pastCount: 0,
+        defaultSelectedAmount: 500,
+        qualifiedReferralsCount: 0,
+        hasPaidPlan: true
+      };
+    }
+  });
+  const [tierLoading, setTierLoading] = useState(() => {
+    return !localStorage.getItem('cached_withdraw_tier');
   });
   const [feedback, setFeedback] = useState({ text: '', type: '' });
   const [inviteModal, setInviteModal] = useState({ open: false, message: '' });
@@ -59,6 +73,9 @@ const Withdraw = () => {
       const res = await api.get('/transactions/withdraw-tier');
       if (res.data.success) {
         setTierInfo(res.data);
+        try {
+          localStorage.setItem('cached_withdraw_tier', JSON.stringify(res.data));
+        } catch {}
         if (res.data.pastCount === 0) {
           setAmount(500);
         } else {

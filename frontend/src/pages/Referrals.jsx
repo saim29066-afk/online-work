@@ -16,15 +16,31 @@ import {
 
 const Referrals = () => {
   const { user } = useAuth();
-  const [data, setData] = useState({
-    referralCode: '',
-    totalReferrals: 0,
-    activeReferrals: 0,
-    totalReferralCommission: 0,
-    referrals: [],
-    earningsHistory: []
+  const [data, setData] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_referral_data');
+      return cached ? JSON.parse(cached) : {
+        referralCode: user?.referralCode || '',
+        totalReferrals: user?.referrals?.length || 0,
+        activeReferrals: 0,
+        totalReferralCommission: 0,
+        referrals: [],
+        earningsHistory: []
+      };
+    } catch {
+      return {
+        referralCode: user?.referralCode || '',
+        totalReferrals: 0,
+        activeReferrals: 0,
+        totalReferralCommission: 0,
+        referrals: [],
+        earningsHistory: []
+      };
+    }
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    return !localStorage.getItem('cached_referral_data');
+  });
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -33,6 +49,9 @@ const Referrals = () => {
         const res = await api.get('/referrals');
         if (res.data.success) {
           setData(res.data.data);
+          try {
+            localStorage.setItem('cached_referral_data', JSON.stringify(res.data.data));
+          } catch {}
         }
       } catch (err) {
         console.error('Failed to load referral data:', err);

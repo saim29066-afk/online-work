@@ -22,7 +22,14 @@ import {
 const Deposit = () => {
   const { user, refreshUser } = useAuth();
   const [gateway, setGateway] = useState('UPAISA');
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_payment_settings');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [amount, setAmount] = useState('');
   const [senderNumber, setSenderNumber] = useState('');
   const [senderName, setSenderName] = useState('');
@@ -32,8 +39,17 @@ const Deposit = () => {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState({ text: '', type: '' });
-  const [deposits, setDeposits] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [deposits, setDeposits] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_deposits');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loadingHistory, setLoadingHistory] = useState(() => {
+    return !localStorage.getItem('cached_payment_settings');
+  });
 
   const fetchData = async () => {
     try {
@@ -44,9 +60,15 @@ const Deposit = () => {
 
       if (resSettings.data.success) {
         setSettings(resSettings.data.settings);
+        try {
+          localStorage.setItem('cached_payment_settings', JSON.stringify(resSettings.data.settings));
+        } catch {}
       }
       if (resDeposits.data.success) {
         setDeposits(resDeposits.data.deposits);
+        try {
+          localStorage.setItem('cached_deposits', JSON.stringify(resDeposits.data.deposits));
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to load deposit data:', err);
