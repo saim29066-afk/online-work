@@ -60,16 +60,34 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
 
   const isPopular = plan.badge?.toLowerCase().includes('popular');
 
+  const isPlanActive = (() => {
+    try {
+      const cached = localStorage.getItem('cached_investments');
+      const invs = cached ? JSON.parse(cached) : (user?.investments || []);
+      return invs.some((i) => i.planId === plan.id && i.status === 'ACTIVE');
+    } catch {
+      return false;
+    }
+  })();
+
   return (
     <>
       <div
         className={`relative rounded-2xl p-3.5 sm:p-4 transition-all flex flex-col justify-between bg-white border ${
-          isPopular
+          isPlanActive
+            ? 'border-teal-500 ring-2 ring-teal-500/20 shadow-xs'
+            : isPopular
             ? 'border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
             : 'border-slate-200 shadow-xs hover:border-slate-300'
         }`}
       >
-        {plan.badge && (
+        {isPlanActive ? (
+          <div className="absolute -top-2.5 left-3.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider uppercase shadow-xs bg-teal-600 text-white flex items-center gap-1">
+              <CheckCircle2 className="w-2.5 h-2.5" /> ACTIVE PLAN
+            </span>
+          </div>
+        ) : plan.badge ? (
           <div className="absolute -top-2.5 left-3.5">
             <span
               className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider uppercase shadow-xs ${
@@ -81,7 +99,7 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
               {plan.badge}
             </span>
           </div>
-        )}
+        ) : null}
 
         <div>
           {/* Title & Price Header */}
@@ -138,6 +156,11 @@ const PlanCard = ({ plan, onPlanPurchased }) => {
           <div className="w-full py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs text-center flex items-center justify-center gap-1.5">
             <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
             <span>Account Restricted</span>
+          </div>
+        ) : isPlanActive ? (
+          <div className="w-full py-2.5 px-3 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 font-bold text-xs text-center flex items-center justify-center gap-1.5 shadow-2xs">
+            <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+            <span>Active Plan (In Progress)</span>
           </div>
         ) : (
           <button

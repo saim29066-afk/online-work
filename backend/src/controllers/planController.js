@@ -77,17 +77,19 @@ const buyPlan = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // If Level 0 (Free Starter), check if already active
-    if (plan.id === 0 || plan.price === 0) {
-      const alreadyHasFreePlan = user.investments.some(inv => inv.planId === 0 && inv.status === 'ACTIVE');
-      if (alreadyHasFreePlan) {
-        return res.status(400).json({
-          success: false,
-          message: `Level 0 Free Starter Plan is already active on your account! You are already receiving Rs. ${plan.dailyBonus}/day.`
-        });
-      }
-    } else {
-      // For paid plans: Check if user has made at least 1 approved deposit
+    // 1. Check if user already has this specific plan currently ACTIVE
+    const existingActivePlan = user.investments.find(inv => inv.planId === planIdNum && inv.status === 'ACTIVE');
+    if (existingActivePlan) {
+      const remainingDays = Math.max(0, existingActivePlan.durationDays - existingActivePlan.daysClaimed);
+      return res.status(400).json({
+        success: false,
+        alreadyActive: true,
+        message: `Aapka "${plan.name}" pehle se ACTIVE hai! Yeh plan ${remainingDays} din baad khatam hone par hi dobara buy kiya ja sakta hai.`
+      });
+    }
+
+    // 2. Paid plans verification
+    if (plan.price > 0) {
       if (approvedDepositCount === 0 && (user.totalDeposited || 0) <= 0) {
         return res.status(400).json({
           success: false,
