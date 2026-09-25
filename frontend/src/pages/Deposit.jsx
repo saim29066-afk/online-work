@@ -39,6 +39,7 @@ const Deposit = () => {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState({ text: '', type: '' });
+  const [submittedReceipt, setSubmittedReceipt] = useState(null);
   const [deposits, setDeposits] = useState(() => {
     try {
       const cached = localStorage.getItem('cached_deposits');
@@ -190,6 +191,13 @@ const Deposit = () => {
       });
 
       if (res.data.success) {
+        setSubmittedReceipt({
+          amount,
+          senderNumber: cleanSender,
+          senderName,
+          transactionId,
+          gateway: gatewayName
+        });
         setFeedback({ text: res.data.message, type: 'success' });
         setAmount('');
         setSenderNumber('');
@@ -419,7 +427,7 @@ const Deposit = () => {
                     <p className="font-bold">{feedback.text}</p>
                     {feedback.type === 'success' && (
                       <p className="text-[11px] text-emerald-800 font-medium mt-0.5">
-                        Your deposit verification request has been submitted. It will be verified by administration shortly.
+                        Your deposit verification request has been submitted. Click below to notify Admin on WhatsApp for instant fast verification!
                       </p>
                     )}
                   </div>
@@ -431,6 +439,24 @@ const Deposit = () => {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
+              </div>
+            )}
+
+            {submittedReceipt && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border-2 border-emerald-300 space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-emerald-950">Slip Details: Rs. {Number(submittedReceipt.amount).toLocaleString()} via {submittedReceipt.gateway}</span>
+                  <span className="text-[11px] font-mono text-emerald-800 font-bold">TID: {submittedReceipt.transactionId}</span>
+                </div>
+                <a
+                  href={`https://wa.me/${(settings?.whatsappNumber || '923305367615').replace(/\D/g, '')}?text=${encodeURIComponent(`Hello Admin, I have submitted a deposit slip on the platform.\n\n*Deposit Details:*\n• Amount: Rs. ${submittedReceipt.amount}\n• Gateway: ${submittedReceipt.gateway}\n• Sender Name: ${submittedReceipt.senderName}\n• Sender Number: ${submittedReceipt.senderNumber}\n• Transaction ID (TID): ${submittedReceipt.transactionId}\n\nPlease verify and approve my deposit. Thank you!`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2 px-3 rounded-lg bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-98"
+                >
+                  <MessageSquare className="w-4 h-4 fill-white shrink-0" />
+                  <span>📲 Send Slip to Admin WhatsApp for Instant Approval</span>
+                </a>
               </div>
             )}
 

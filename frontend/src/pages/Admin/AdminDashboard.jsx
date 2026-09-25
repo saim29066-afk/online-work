@@ -322,6 +322,48 @@ const AdminDashboard = () => {
           <ChevronRight className="w-5 h-5 text-slate-400" />
         </Link>
       </div>
+
+      {/* Persistent Live Bottom Alert Notification Bar */}
+      {(stats?.pendingDeposits > 0 || stats?.pendingWithdrawals > 0) && (
+        <div className="fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40">
+          <div className="p-3.5 rounded-2xl bg-slate-900/95 backdrop-blur text-white shadow-2xl border border-amber-500/50 flex items-center justify-between gap-3 ring-2 ring-amber-400/20">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative flex h-3 w-3 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-black text-amber-300 truncate">
+                  {stats.pendingDeposits + stats.pendingWithdrawals} New Request{(stats.pendingDeposits + stats.pendingWithdrawals) > 1 ? 's' : ''} Received!
+                </p>
+                <p className="text-[10px] text-slate-300 truncate">
+                  {stats.pendingDeposits > 0 && `${stats.pendingDeposits} Deposit Slip${stats.pendingDeposits > 1 ? 's' : ''}`}
+                  {stats.pendingDeposits > 0 && stats.pendingWithdrawals > 0 && ' • '}
+                  {stats.pendingWithdrawals > 0 && `${stats.pendingWithdrawals} Cashout${stats.pendingWithdrawals > 1 ? 's' : ''}`}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {stats.pendingDeposits > 0 && (
+                <Link
+                  to="/admin/deposits"
+                  className="py-1 px-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[10.5px] transition-all shadow-xs"
+                >
+                  Deposits ({stats.pendingDeposits})
+                </Link>
+              )}
+              {stats.pendingWithdrawals > 0 && (
+                <Link
+                  to="/admin/withdrawals"
+                  className="py-1 px-2.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-[10.5px] transition-all shadow-xs"
+                >
+                  Cashouts ({stats.pendingWithdrawals})
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

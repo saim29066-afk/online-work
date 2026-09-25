@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import confetti from 'canvas-confetti';
 import PageHeader from '../components/PageHeader';
 import {
   Layers,
@@ -12,11 +13,12 @@ import {
   ChevronRight,
   ArrowRight,
   PlusCircle,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 
 const MyPlans = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [investments, setInvestments] = useState(() => {
     try {
       const cached = localStorage.getItem('cached_investments');
@@ -28,6 +30,8 @@ const MyPlans = () => {
   const [loading, setLoading] = useState(() => {
     return !localStorage.getItem('cached_investments');
   });
+  const [claimingId, setClaimingId] = useState(null);
+  const [actionFeedback, setActionFeedback] = useState({ id: null, text: '', type: '' });
 
   const fetchInvestments = async () => {
     try {
@@ -48,6 +52,37 @@ const MyPlans = () => {
   useEffect(() => {
     fetchInvestments();
   }, []);
+
+  const handleClaimIndividual = async (investmentId) => {
+    setClaimingId(investmentId);
+    setActionFeedback({ id: null, text: '', type: '' });
+
+    try {
+      const res = await api.post(`/plans/claim-daily/${investmentId}`);
+      if (res.data.success) {
+        setActionFeedback({
+          id: investmentId,
+          text: res.data.message || 'Daily profit collected successfully!',
+          type: 'success'
+        });
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.6 }
+        });
+        await refreshUser();
+        await fetchInvestments();
+      }
+    } catch (err) {
+      setActionFeedback({
+        id: investmentId,
+        text: err.response?.data?.message || 'Failed to collect daily profit. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setClaimingId(null);
+    }
+  };
 
   const activePlans = investments.filter((i) => i.status === 'ACTIVE');
   const completedPlans = investments.filter((i) => i.status === 'COMPLETED');
@@ -109,7 +144,7 @@ const MyPlans = () => {
             to="/daily-bonus"
             className="text-[11px] text-emerald-700 font-bold hover:underline flex items-center gap-0.5"
           >
-            Claim Daily Bonus →
+            Claim All Profit →
           </Link>
         </div>
 
@@ -131,52 +166,101 @@ const MyPlans = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {activePlans.map((inv) => {
               const progress = Math.min(100, Math.round((inv.daysClaimed / inv.durationDays) * 100));
               const remainingDays = Math.max(0, inv.durationDays - inv.daysClaimed);
+              const isClaimable = inv.isClaimable !== false;
 
               return (
                 <div
                   key={inv.id}
-                  className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2"
+                  className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5 flex flex-col justify-between"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800">
-                        ACTIVE
-                      </span>
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5">
-                        {inv.plan?.name || 'Investment Plan'}
-                      </h3>
-                      <p className="text-[11px] font-bold text-emerald-700">
-                        Rs. {inv.dailyBonus} / Day
-                      </p>
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800">
+                          ACTIVE
+                        </span>
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5">
+                          {inv.plan?.name || 'Investment Plan'}
+                        </h3>
+                        <p className="text-[11px] font-bold text-emerald-700">
+                          Rs. {inv.dailyBonus} / Day
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-xs font-bold text-slate-900 block">
+                          Rs. {Number(inv.amount).toLocaleString()}
+                        </span>
+                        <span className="text-[9px] text-slate-500 block">Package Cost</span>
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-slate-900 block">
-                        Rs. {Number(inv.amount).toLocaleString()}
+                    {/* Progress bar */}
+                    <div className="space-y-1 mt-2.5">
+                      <div className="flex justify-between text-[10px] font-bold text-slate-700">
+                        <span>Progress: {inv.daysClaimed} / {inv.durationDays} Days</span>
+                        <span className="text-emerald-700">{progress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-emerald-600 h-1.5 rounded-full transition-all"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <span className="text-[9.5px] text-slate-500 font-medium block">
+                        {remainingDays} days remaining of guaranteed ROI
                       </span>
-                      <span className="text-[9px] text-slate-500 block">Package Cost</span>
                     </div>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-700">
-                      <span>Progress: {inv.daysClaimed} / {inv.durationDays} Days</span>
-                      <span className="text-emerald-700">{progress}%</span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  {/* Individual Plan Daily Claim Section */}
+                  <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                    {actionFeedback.id === inv.id && actionFeedback.text && (
                       <div
-                        className="bg-emerald-600 h-1.5 rounded-full transition-all"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <span className="text-[9.5px] text-slate-500 font-medium block">
-                      {remainingDays} days remaining of guaranteed ROI
-                    </span>
+                        className={`p-2 rounded-lg text-[10.5px] font-bold flex items-center gap-1.5 ${
+                          actionFeedback.type === 'success'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-800 border border-rose-200'
+                        }`}
+                      >
+                        {actionFeedback.type === 'success' ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                        )}
+                        <span>{actionFeedback.text}</span>
+                      </div>
+                    )}
+
+                    {isClaimable ? (
+                      <button
+                        type="button"
+                        onClick={() => handleClaimIndividual(inv.id)}
+                        disabled={claimingId === inv.id}
+                        className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-98 transition-all disabled:opacity-50"
+                      >
+                        {claimingId === inv.id ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Collecting Rs. {inv.dailyBonus}...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5 fill-white text-white" />
+                            <span>⚡ Collect Rs. {inv.dailyBonus} Daily Profit</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="w-full py-1.5 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold text-center flex items-center justify-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Collected Today (Next in 24h)</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

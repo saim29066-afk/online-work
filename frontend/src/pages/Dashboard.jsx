@@ -172,7 +172,21 @@ const Dashboard = () => {
   };
 
   const activePlans = investments.filter((i) => i.status === 'ACTIVE');
-  const totalDailyProfit = activePlans.reduce((acc, curr) => acc + curr.dailyBonus, 0);
+  const totalDailyRate = activePlans.reduce((acc, curr) => acc + curr.dailyBonus, 0);
+
+  // Helper to determine if an investment is eligible to be collected right now
+  const isClaimable = (inv) => {
+    if (inv.status !== 'ACTIVE') return false;
+    if (inv.daysClaimed >= inv.durationDays) return false;
+    if (inv.isClaimable !== undefined) return inv.isClaimable;
+    if (!inv.lastClaimedAt) return true;
+    const diffHours = (Date.now() - new Date(inv.lastClaimedAt).getTime()) / (1000 * 60 * 60);
+    return diffHours >= 20;
+  };
+
+  const claimablePlans = activePlans.filter(isClaimable);
+  const claimableAmount = claimablePlans.reduce((acc, curr) => acc + curr.dailyBonus, 0);
+  const alreadyClaimedCount = activePlans.length - claimablePlans.length;
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-3.5 bg-white">
@@ -331,34 +345,70 @@ const Dashboard = () => {
       </div>
 
       {/* 🌟 Ultra-Visible Daily Profit Collection Action Card */}
-      <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-500 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100 shadow-md relative overflow-hidden">
+      <div
+        className={`p-4 sm:p-5 rounded-2xl border-2 shadow-md relative overflow-hidden transition-all ${
+          claimableAmount > 0
+            ? 'border-emerald-500 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100'
+            : activePlans.length > 0
+            ? 'border-teal-300 bg-teal-50/70'
+            : 'border-slate-200 bg-slate-50/80'
+        }`}
+      >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
-              <Zap className="w-6 h-6 fill-white animate-pulse" />
+            <div
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md shrink-0 ${
+                claimableAmount > 0 ? 'bg-emerald-600 text-white' : 'bg-teal-600 text-white'
+              }`}
+            >
+              <Zap className={`w-6 h-6 fill-white ${claimableAmount > 0 ? 'animate-pulse' : ''}`} />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-2xs">
-                  ⚡ Daily Collection
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-2xs ${
+                    claimableAmount > 0
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-teal-700 text-white'
+                  }`}
+                >
+                  {claimableAmount > 0 ? '⚡ Ready to Collect' : '✅ Collected for Today'}
                 </span>
-                <span className="text-[11px] font-bold text-emerald-900 bg-emerald-200/70 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-slate-700 bg-white/80 border border-slate-200 px-2 py-0.5 rounded-full">
                   {activePlans.length} Active {activePlans.length === 1 ? 'Plan' : 'Plans'}
                 </span>
               </div>
               <h3 className="text-base sm:text-lg font-black text-slate-900">
-                Daily Bonus: <span className="text-emerald-700">Rs. {totalDailyProfit.toLocaleString()} / Day</span>
+                {claimableAmount > 0 ? (
+                  <>
+                    Daily Profit Ready:{' '}
+                    <span className="text-emerald-700">Rs. {claimableAmount.toLocaleString()}</span>
+                  </>
+                ) : activePlans.length > 0 ? (
+                  <>
+                    Today's Profit Claimed:{' '}
+                    <span className="text-teal-800">Rs. {totalDailyRate.toLocaleString()} / Day</span>
+                  </>
+                ) : (
+                  <>
+                    Daily Bonus: <span className="text-slate-700">Rs. 0 / Day</span>
+                  </>
+                )}
               </h3>
               <p className="text-xs text-slate-600 font-medium">
-                {activePlans.length > 0
-                  ? "Click collect button every 24 hours to credit your daily profit into wallet."
-                  : "Activate any student plan below to start collecting daily profit!"}
+                {claimableAmount > 0
+                  ? alreadyClaimedCount > 0
+                    ? `Collect profit for ${claimablePlans.length} remaining plan (${alreadyClaimedCount} already collected earlier).`
+                    : `Collect your daily profit for all ${claimablePlans.length} active plans into your wallet now!`
+                  : activePlans.length > 0
+                  ? 'All bonuses collected for today! Your next 24h profits will unlock tomorrow.'
+                  : 'Activate any student plan below to start collecting daily profit!'}
               </p>
             </div>
           </div>
 
           <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-            {activePlans.length > 0 ? (
+            {claimableAmount > 0 ? (
               <button
                 onClick={handleClaimDaily}
                 disabled={claimLoading || user?.isRestricted}
@@ -372,10 +422,15 @@ const Dashboard = () => {
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-white" />
-                    <span>Collect Rs. {totalDailyProfit} Now</span>
+                    <span>Collect Rs. {claimableAmount.toLocaleString()} Now</span>
                   </>
                 )}
               </button>
+            ) : activePlans.length > 0 ? (
+              <div className="py-2.5 px-4 rounded-xl bg-teal-100 text-teal-800 font-bold text-xs flex items-center justify-center gap-1.5 border border-teal-300">
+                <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                <span>Claimed for Today</span>
+              </div>
             ) : (
               <a
                 href="#student-plans"
@@ -427,9 +482,11 @@ const Dashboard = () => {
             <Zap className="w-4 h-4 text-teal-600 shrink-0" />
           </div>
           <h2 className="text-lg sm:text-2xl font-black text-teal-700 leading-tight">
-            Rs. {totalDailyProfit} <span className="text-xs text-slate-500 font-normal">/ day</span>
+            Rs. {totalDailyRate} <span className="text-xs text-slate-500 font-normal">/ day</span>
           </h2>
-          <span className="text-[11px] text-slate-600 mt-1 block font-medium">{activePlans.length} active plans</span>
+          <span className="text-[11px] text-slate-600 mt-1 block font-medium">
+            {claimableAmount > 0 ? `⚡ Rs. ${claimableAmount} ready to collect` : `${activePlans.length} active plans`}
+          </span>
         </div>
 
         {/* Total Earned */}

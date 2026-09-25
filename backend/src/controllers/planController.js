@@ -207,7 +207,7 @@ const buyPlan = async (req, res) => {
   }
 };
 
-// @desc Get current user active investments
+// @desc Get current user active investments with exact claimable calculation
 // @route GET /api/plans/my-investments
 const getMyInvestments = async (req, res) => {
   try {
@@ -219,7 +219,40 @@ const getMyInvestments = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    return res.status(200).json({ success: true, investments });
+    const now = new Date();
+    let claimableAmount = 0;
+    let claimablePlansCount = 0;
+
+    const enrichedInvestments = investments.map((inv) => {
+      let isClaimable = false;
+      if (inv.status === 'ACTIVE' && inv.daysClaimed < inv.durationDays) {
+        if (!inv.lastClaimedAt) {
+          isClaimable = true;
+        } else {
+          const diffHours = (now - new Date(inv.lastClaimedAt)) / (1000 * 60 * 60);
+          if (diffHours >= 20) {
+            isClaimable = true;
+          }
+        }
+      }
+
+      if (isClaimable) {
+        claimableAmount += inv.dailyBonus;
+        claimablePlansCount += 1;
+      }
+
+      return {
+        ...inv,
+        isClaimable
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      investments: enrichedInvestments,
+      claimableAmount,
+      claimablePlansCount
+    });
   } catch (error) {
     console.error('Get investments error:', error);
     return res.status(500).json({ success: false, message: 'Failed to fetch your investments' });
@@ -306,16 +339,85 @@ const claimDailyProfit = async (req, res) => {
       select: { balance: true, totalEarned: true }
     });
 
+// @desc Claim daily bonus for a SINGLE specific investment plan
+// @route POST /api/plans/claim-daily/:id
+const claimIndividualPlanProfit = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const inv = await prisma.userInvestment.findFirst({
+      where: {
+        id,
+        userId
+      },
+      include: { plan: true }
+    });
+
+    if (!inv) {
+      return res.status(404).json({ success: false, message: 'Investment plan not found on your account.' });
+    }
+
+    if (inv.status !== 'ACTIVE') {
+      return res.status(400).json({ success: false, message: 'This plan is already completed or inactive.' });
+    }
+
+    if (inv.daysClaimed >= inv.durationDays) {
+      return res.status(400).json({ success: false, message: 'All days profit for this plan have already been claimed.' });
+    }
+
+    const now = new Date();
+    if (inv.lastClaimedAt) {
+      const diffHours = (now - new Date(inv.lastClaimedAt)) / (1000 * 60 * 60);
+      if (diffHours < 20) {
+        const remainingHours = Math.ceil(24 - diffHours);
+        return res.status(400).json({
+          success: false,
+          message: `Aapne is plan ka daily bonus aaj pehle hi collect kar liya hai! Agla bonus ${remainingHours} ghante baad unlock hoga.`
+        });
+      }
+    }
+
+    const profitAmount = inv.dailyBonus;
+    const newDaysClaimed = inv.daysClaimed + 1;
+    const isComplete = newDaysClaimed >= inv.durationDays;
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          balance: { increment: profitAmount },
+          totalEarned: { increment: profitAmount }
+        }
+      }),
+      prisma.userInvestment.update({
+        where: { id: inv.id },
+        data: {
+          daysClaimed: newDaysClaimed,
+          lastClaimedAt: now,
+          status: isComplete ? 'COMPLETED' : 'ACTIVE'
+        }
+      })
+    ]);
+
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { balance: true, totalEarned: true }
+    });
+
     return res.status(200).json({
       success: true,
-      message: `Successfully claimed Rs. ${totalClaimedToday.toLocaleString()} daily bonus! Added to your wallet.`,
-      claimedAmount: totalClaimedToday,
+      message: `Rs. ${profitAmount.toLocaleString()} profit collected for ${inv.plan?.name || 'Plan'}! Added to your wallet.`,
+      claimedAmount: profitAmount,
+      investmentId: inv.id,
+      daysClaimed: newDaysClaimed,
+      isComplete,
       newBalance: updatedUser.balance
     });
   } catch (error) {
-    console.error('Claim daily error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to claim daily bonus' });
+    console.error('Claim individual plan error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to claim plan profit.' });
   }
 };
 
-module.exports = { getPlans, buyPlan, getMyInvestments, claimDailyProfit };
+module.exports = { getPlans, buyPlan, getMyInvestments, claimDailyProfit, claimIndividualPlanProfit };

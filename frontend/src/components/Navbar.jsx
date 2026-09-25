@@ -240,7 +240,7 @@ const Navbar = () => {
 
           {/* Right Action buttons */}
           <div className="flex items-center gap-2">
-            {isAuthenticated ? (
+            {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
                 {isAdmin ? (
                   /* Admin Role Badge (No student wallet balance) */

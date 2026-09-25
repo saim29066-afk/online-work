@@ -16,21 +16,37 @@ import {
   Loader2
 } from 'lucide-react';
 
+const DEFAULT_PLANS = [
+  { id: 1, name: 'Student Starter', price: 1000, dailyBonus: 100, durationDays: 50, referralBonusPercent: 50, badge: 'Popular', features: ['Daily Rs. 100 guaranteed return', '50 Days validity', '50% referral commission'] },
+  { id: 2, name: 'Student Standard', price: 2000, dailyBonus: 200, durationDays: 50, referralBonusPercent: 50, badge: 'Best Value', features: ['Daily Rs. 200 guaranteed return', '50 Days validity', '50% referral commission'] },
+  { id: 3, name: 'Student Silver', price: 4000, dailyBonus: 400, durationDays: 50, referralBonusPercent: 50, badge: 'Silver', features: ['Daily Rs. 400 guaranteed return', '50 Days validity', '50% referral commission'] },
+  { id: 4, name: 'Student Gold', price: 8000, dailyBonus: 800, durationDays: 50, referralBonusPercent: 50, badge: 'Gold VIP', features: ['Daily Rs. 800 guaranteed return', '50 Days validity', '50% referral commission'] },
+  { id: 5, name: 'Student Diamond', price: 12000, dailyBonus: 1200, durationDays: 50, referralBonusPercent: 50, badge: 'Diamond Elite', features: ['Daily Rs. 1,200 guaranteed return', '50 Days validity', '50% referral commission'] }
+];
+
 const Home = () => {
-  const [plans, setPlans] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [plans, setPlans] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_plans');
+      return cached ? JSON.parse(cached) : DEFAULT_PLANS;
+    } catch {
+      return DEFAULT_PLANS;
+    }
+  });
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
   useEffect(() => {
     const fetchHomePlans = async () => {
       try {
         const res = await api.get('/plans');
-        if (res.data.success) {
+        if (res.data.success && Array.isArray(res.data.plans)) {
           setPlans(res.data.plans);
+          try {
+            localStorage.setItem('cached_plans', JSON.stringify(res.data.plans));
+          } catch {}
         }
       } catch (err) {
         console.error('Failed to load home plans:', err);
-      } finally {
-        setLoadingPlans(false);
       }
     };
     fetchHomePlans();

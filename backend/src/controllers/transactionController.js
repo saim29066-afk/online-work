@@ -344,6 +344,19 @@ const submitWithdrawal = async (req, res) => {
       }
     }
 
+    // Check if user has activated at least 1 investment plan before requesting a withdrawal
+    const totalUserInvestmentsCount = await prisma.userInvestment.count({
+      where: { userId }
+    });
+
+    if (totalUserInvestmentsCount === 0) {
+      return res.status(400).json({
+        success: false,
+        requiresPlan: true,
+        message: 'Plan Required: Deposited balance ya profits withdraw karne se pehle kam az kam 1 Student Investment Plan activate karna lazmi hai.'
+      });
+    }
+
     if (user.balance < numAmount) {
       return res.status(400).json({
         success: false,
