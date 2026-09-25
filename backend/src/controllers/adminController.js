@@ -553,16 +553,16 @@ const updateSettings = async (req, res) => {
     if (!settings) {
       settings = await prisma.paymentSetting.create({
         data: {
-          easypaisaNumber: easypaisaNumber || '03451234567',
-          easypaisaTitle: easypaisaTitle || 'Muhammad Ali (Admin)',
+          easypaisaNumber: easypaisaNumber || '',
+          easypaisaTitle: easypaisaTitle || 'Official Account',
           easypaisaStatus: easypaisaStatus || 'ACTIVE',
           easypaisaNotice: easypaisaNotice || '',
-          jazzcashNumber: jazzcashNumber || '03019876543',
-          jazzcashTitle: jazzcashTitle || 'Muhammad Ali (Admin)',
+          jazzcashNumber: jazzcashNumber || '',
+          jazzcashTitle: jazzcashTitle || 'Official Account',
           jazzcashStatus: jazzcashStatus || 'ACTIVE',
           jazzcashNotice: jazzcashNotice || '',
-          upaisaNumber: upaisaNumber || '03331234567',
-          upaisaTitle: upaisaTitle || 'Muhammad Ali (Admin)',
+          upaisaNumber: upaisaNumber || '',
+          upaisaTitle: upaisaTitle || 'Official Account',
           upaisaStatus: upaisaStatus || 'ACTIVE',
           upaisaNotice: upaisaNotice || '',
           minWithdrawal: minWithdrawal ? parseFloat(minWithdrawal) : 500,

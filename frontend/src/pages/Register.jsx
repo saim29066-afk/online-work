@@ -39,7 +39,7 @@ const Register = () => {
 
     const cleanPhone = phone.trim().replace(/\D/g, '');
     if (cleanPhone.length !== 11 || !cleanPhone.startsWith('03')) {
-      setError('Please enter a valid 11-digit Pakistani mobile number (e.g. 03001234567)');
+      setError('Please enter a valid 11-digit Pakistani mobile number (e.g. 03XXXXXXXXX)');
       return;
     }
 
@@ -107,7 +107,7 @@ const Register = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Ali Ahmed"
+                  placeholder="Your Full Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
@@ -127,7 +127,7 @@ const Register = () => {
                   type="tel"
                   required
                   maxLength={11}
-                  placeholder="03001234567"
+                  placeholder="03XXXXXXXXX (11 digits)"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"

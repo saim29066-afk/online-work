@@ -29,7 +29,7 @@ const Login = () => {
 
     // If user entered numbers (phone), ensure it is 11 digits
     if (/^\d+$/.test(phoneOrEmail) && phoneOrEmail.length !== 11) {
-      setError('Mobile number must be exactly 11 digits (e.g. 03001234567)');
+      setError('Mobile number must be exactly 11 digits (e.g. 03XXXXXXXXX)');
       return;
     }
 
@@ -83,7 +83,7 @@ const Login = () => {
                   type="text"
                   required
                   maxLength={phoneOrEmail.includes('@') ? 100 : 11}
-                  placeholder="03001234567"
+                  placeholder="03XXXXXXXXX"
                   value={phoneOrEmail}
                   onChange={handlePhoneOrEmailChange}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"

@@ -21,7 +21,7 @@ import {
 
 const Deposit = () => {
   const { user, refreshUser } = useAuth();
-  const [gateway, setGateway] = useState('EASYPAISA');
+  const [gateway, setGateway] = useState('UPAISA');
   const [settings, setSettings] = useState(null);
   const [amount, setAmount] = useState('');
   const [senderNumber, setSenderNumber] = useState('');
@@ -140,7 +140,7 @@ const Deposit = () => {
 
     const cleanSender = senderNumber.trim().replace(/\D/g, '');
     if (cleanSender.length !== 11 || !cleanSender.startsWith('03')) {
-      setFeedback({ text: 'Sender number must be a valid 11-digit mobile number (e.g. 03001234567).', type: 'error' });
+      setFeedback({ text: 'Sender number must be a valid 11-digit mobile number (e.g. 03XXXXXXXXX).', type: 'error' });
       return;
     }
 
@@ -189,41 +189,41 @@ const Deposit = () => {
   };
 
   const activeStatus =
-    gateway === 'EASYPAISA'
-      ? settings?.easypaisaStatus || 'ACTIVE'
+    gateway === 'UPAISA'
+      ? settings?.upaisaStatus || 'ACTIVE'
       : gateway === 'JAZZCASH'
       ? settings?.jazzcashStatus || 'ACTIVE'
-      : settings?.upaisaStatus || 'ACTIVE';
+      : settings?.easypaisaStatus || 'ACTIVE';
 
   const activeNotice =
-    gateway === 'EASYPAISA'
-      ? settings?.easypaisaNotice
+    gateway === 'UPAISA'
+      ? settings?.upaisaNotice
       : gateway === 'JAZZCASH'
       ? settings?.jazzcashNotice
-      : settings?.upaisaNotice;
+      : settings?.easypaisaNotice;
 
   const activeNumber =
-    gateway === 'EASYPAISA'
-      ? settings?.easypaisaNumber || '03451234567'
+    gateway === 'UPAISA'
+      ? settings?.upaisaNumber || ''
       : gateway === 'JAZZCASH'
-      ? settings?.jazzcashNumber || '03019876543'
-      : settings?.upaisaNumber || '03331234567';
+      ? settings?.jazzcashNumber || ''
+      : settings?.easypaisaNumber || '';
 
   const activeTitle =
-    gateway === 'EASYPAISA'
-      ? settings?.easypaisaTitle || 'Muhammad Ali (Admin)'
+    gateway === 'UPAISA'
+      ? settings?.upaisaTitle || 'Official Account'
       : gateway === 'JAZZCASH'
-      ? settings?.jazzcashTitle || 'Muhammad Ali (Admin)'
-      : settings?.upaisaTitle || 'Muhammad Ali (Admin)';
+      ? settings?.jazzcashTitle || 'Official Account'
+      : settings?.easypaisaTitle || 'Official Account';
 
-  const gatewayName = gateway === 'EASYPAISA' ? 'EasyPaisa' : gateway === 'JAZZCASH' ? 'JazzCash' : 'UPaisa';
+  const gatewayName = gateway === 'UPAISA' ? 'UPaisa' : gateway === 'JAZZCASH' ? 'JazzCash' : 'EasyPaisa';
 
   return (
     <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-5 space-y-4 bg-white">
       {/* Mobile-Native Back Button Header */}
       <PageHeader
         title="Deposit Funds"
-        subtitle="Recharge your wallet via EasyPaisa / JazzCash / UPaisa"
+        subtitle="Recharge your wallet via UPaisa / JazzCash / EasyPaisa"
         backTo="/dashboard"
         rightAction={
           <Link
@@ -235,33 +235,35 @@ const Deposit = () => {
         }
       />
 
-      {/* Gateway Selector Tabs (3 Options) */}
+      {/* Gateway Selector Tabs (1. UPaisa, 2. JazzCash, 3. EasyPaisa) */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {/* Tab 1: UPaisa */}
         <button
           type="button"
-          onClick={() => setGateway('EASYPAISA')}
+          onClick={() => setGateway('UPAISA')}
           className={`py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition-all border ${
-            gateway === 'EASYPAISA'
-              ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm scale-[1.01]'
+            gateway === 'UPAISA'
+              ? 'bg-orange-600 text-white border-orange-600 shadow-sm scale-[1.01]'
               : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
           }`}
         >
           <div className="flex items-center gap-1.5">
-            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${settings?.easypaisaStatus === 'UNDER_MAINTENANCE' ? 'bg-amber-400' : settings?.easypaisaStatus === 'COMING_SOON' ? 'bg-blue-400' : 'bg-emerald-400'}`} />
-            <span className="truncate">EasyPaisa</span>
+            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${settings?.upaisaStatus === 'UNDER_MAINTENANCE' ? 'bg-amber-400' : settings?.upaisaStatus === 'COMING_SOON' ? 'bg-blue-400' : 'bg-orange-400'}`} />
+            <span className="truncate">UPaisa</span>
           </div>
-          {settings?.easypaisaStatus === 'UNDER_MAINTENANCE' && (
+          {settings?.upaisaStatus === 'UNDER_MAINTENANCE' && (
             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300">
               Maintenance
             </span>
           )}
-          {settings?.easypaisaStatus === 'COMING_SOON' && (
+          {settings?.upaisaStatus === 'COMING_SOON' && (
             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 border border-blue-300">
               Soon
             </span>
           )}
         </button>
 
+        {/* Tab 2: JazzCash */}
         <button
           type="button"
           onClick={() => setGateway('JAZZCASH')}
@@ -287,25 +289,26 @@ const Deposit = () => {
           )}
         </button>
 
+        {/* Tab 3: EasyPaisa */}
         <button
           type="button"
-          onClick={() => setGateway('UPAISA')}
+          onClick={() => setGateway('EASYPAISA')}
           className={`py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition-all border ${
-            gateway === 'UPAISA'
-              ? 'bg-orange-600 text-white border-orange-600 shadow-sm scale-[1.01]'
+            gateway === 'EASYPAISA'
+              ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm scale-[1.01]'
               : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
           }`}
         >
           <div className="flex items-center gap-1.5">
-            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${settings?.upaisaStatus === 'UNDER_MAINTENANCE' ? 'bg-amber-400' : settings?.upaisaStatus === 'COMING_SOON' ? 'bg-blue-400' : 'bg-orange-400'}`} />
-            <span className="truncate">UPaisa</span>
+            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${settings?.easypaisaStatus === 'UNDER_MAINTENANCE' ? 'bg-amber-400' : settings?.easypaisaStatus === 'COMING_SOON' ? 'bg-blue-400' : 'bg-emerald-400'}`} />
+            <span className="truncate">EasyPaisa</span>
           </div>
-          {settings?.upaisaStatus === 'UNDER_MAINTENANCE' && (
+          {settings?.easypaisaStatus === 'UNDER_MAINTENANCE' && (
             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300">
               Maintenance
             </span>
           )}
-          {settings?.upaisaStatus === 'COMING_SOON' && (
+          {settings?.easypaisaStatus === 'COMING_SOON' && (
             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 border border-blue-300">
               Soon
             </span>
@@ -434,7 +437,7 @@ const Deposit = () => {
                     type="tel"
                     required
                     maxLength={11}
-                    placeholder="03001234567 (11 digits)"
+                    placeholder="03XXXXXXXXX (11 digits)"
                     value={senderNumber}
                     onChange={(e) => setSenderNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-mono text-xs font-bold focus:outline-none focus:border-emerald-500 transition-all"
@@ -448,7 +451,7 @@ const Deposit = () => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Ali Ahmed"
+                    placeholder="Account Title / Full Name"
                     value={senderName}
                     onChange={(e) => setSenderName(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-bold text-xs focus:outline-none focus:border-emerald-500 transition-all"

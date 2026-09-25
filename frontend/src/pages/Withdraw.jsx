@@ -128,7 +128,7 @@ const Withdraw = () => {
     const cleanNumber = accountNumber.trim().replace(/\D/g, '');
     if (cleanNumber.length !== 11 || !cleanNumber.startsWith('03')) {
       setFeedback({
-        text: 'Account number must be a valid 11-digit mobile number (e.g. 03001234567).',
+        text: 'Account number must be a valid 11-digit mobile number (e.g. 03XXXXXXXXX).',
         type: 'error'
       });
       return;
@@ -379,7 +379,7 @@ const Withdraw = () => {
                 type="tel"
                 required
                 maxLength={11}
-                placeholder="03011234567"
+                placeholder="03XXXXXXXXX (11 digits)"
                 value={accountNumber}
                 onChange={handleAccountNumberChange}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-emerald-500"
@@ -393,7 +393,7 @@ const Withdraw = () => {
               <input
                 type="text"
                 required
-                placeholder="e.g. Ali Ahmed"
+                placeholder="Account Title / Full Name"
                 value={accountTitle}
                 onChange={(e) => setAccountTitle(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-emerald-500"

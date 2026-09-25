@@ -174,7 +174,7 @@ const GatewaySettings = () => {
               <input
                 type="text"
                 maxLength={11}
-                placeholder="03451234567"
+                placeholder="03XXXXXXXXX"
                 name="easypaisaNumber"
                 value={formData.easypaisaNumber}
                 onChange={handleChange}
@@ -243,7 +243,7 @@ const GatewaySettings = () => {
               <input
                 type="text"
                 maxLength={11}
-                placeholder="03019876543"
+                placeholder="03XXXXXXXXX"
                 name="jazzcashNumber"
                 value={formData.jazzcashNumber}
                 onChange={handleChange}
@@ -257,6 +257,7 @@ const GatewaySettings = () => {
               <input
                 type="text"
                 name="jazzcashTitle"
+                placeholder="Official Account Title"
                 value={formData.jazzcashTitle}
                 onChange={handleChange}
                 className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-900 text-xs font-bold focus:outline-none focus:border-amber-600"
@@ -312,7 +313,7 @@ const GatewaySettings = () => {
               <input
                 type="text"
                 maxLength={11}
-                placeholder="03331234567"
+                placeholder="03XXXXXXXXX"
                 name="upaisaNumber"
                 value={formData.upaisaNumber || ''}
                 onChange={handleChange}

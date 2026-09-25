@@ -8,12 +8,12 @@ const getGatewayInfo = async (req, res) => {
     if (!settings) {
       settings = await prisma.paymentSetting.create({
         data: {
-          easypaisaNumber: '03451234567',
-          easypaisaTitle: 'Muhammad Ali (Admin)',
-          jazzcashNumber: '03019876543',
-          jazzcashTitle: 'Muhammad Ali (Admin)',
-          upaisaNumber: '03331234567',
-          upaisaTitle: 'Muhammad Ali (Admin)',
+          easypaisaNumber: '',
+          easypaisaTitle: 'Official Account',
+          jazzcashNumber: '',
+          jazzcashTitle: 'Official Account',
+          upaisaNumber: '',
+          upaisaTitle: 'Official Account',
           minWithdrawal: 500,
           minInvitesForWithdraw: 2,
           supportWhatsapp: '03218956397',
