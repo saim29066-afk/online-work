@@ -441,7 +441,7 @@ const Deposit = () => {
                     <p className="font-bold">{feedback.text}</p>
                     {feedback.type === 'success' && (
                       <p className="text-[11px] text-emerald-800 font-medium mt-0.5">
-                        Your deposit verification request has been submitted. Click below to notify Admin on WhatsApp for instant fast verification!
+                        Aapki deposit request kamiyabi se jama ho chuki hai. Admin slip verify kar ke 5-15 minute me balance add kar dega.
                       </p>
                     )}
                   </div>
@@ -457,20 +457,32 @@ const Deposit = () => {
             )}
 
             {submittedReceipt && (
-              <div className="p-3.5 rounded-xl bg-emerald-50 border-2 border-emerald-300 space-y-2 shadow-xs">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-emerald-950">Slip Details: Rs. {Number(submittedReceipt.amount).toLocaleString()} via {submittedReceipt.gateway}</span>
-                  <span className="text-[11px] font-mono text-emerald-800 font-bold">TID: {submittedReceipt.transactionId}</span>
+              <div className="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border-2 border-emerald-300 space-y-2.5 shadow-xs">
+                <div className="flex items-center gap-2 text-emerald-950 font-black text-xs sm:text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Deposit Request Successfully Submitted!</span>
                 </div>
-                <a
-                  href={`https://wa.me/${(settings?.whatsappNumber || '923305367615').replace(/\D/g, '')}?text=${encodeURIComponent(`Hello Admin, I have submitted a deposit slip on the platform.\n\n*Deposit Details:*\n• Amount: Rs. ${submittedReceipt.amount}\n• Gateway: ${submittedReceipt.gateway}\n• Sender Name: ${submittedReceipt.senderName}\n• Sender Number: ${submittedReceipt.senderNumber}\n• Transaction ID (TID): ${submittedReceipt.transactionId}\n\nPlease verify and approve my deposit. Thank you!`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2 px-3 rounded-lg bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-98"
-                >
-                  <MessageSquare className="w-4 h-4 fill-white shrink-0" />
-                  <span>📲 Send Slip to Admin WhatsApp for Instant Approval</span>
-                </a>
+                <div className="grid grid-cols-2 gap-2 text-[11px] sm:text-xs bg-white p-2.5 rounded-lg border border-emerald-200">
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Amount & Gateway:</span>
+                    <strong className="text-slate-900 font-bold">Rs. {Number(submittedReceipt.amount).toLocaleString()} via {submittedReceipt.gateway}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Transaction ID (TID):</span>
+                    <strong className="text-slate-900 font-mono font-bold">{submittedReceipt.transactionId}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Sender Number:</span>
+                    <strong className="text-slate-900 font-mono">{submittedReceipt.senderNumber}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[10px]">Status:</span>
+                    <span className="text-amber-700 font-bold">⏳ Under Admin Verification</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-emerald-900 font-medium text-center">
+                  ✅ Aapka deposit request darj ho chuka hai. Verification ke baad wallet balance foran update ho jayega.
+                </p>
               </div>
             )}
 

@@ -84,11 +84,18 @@ const Login = () => {
                 <input
                   type="text"
                   required
-                  maxLength={100}
-                  placeholder="03XXXXXXXXX or Email"
+                  maxLength={phoneOrEmail.includes('@') ? 80 : 11}
+                  placeholder="03XXXXXXXXX (11 digits) or Email"
                   value={phoneOrEmail}
-                  onChange={(e) => setPhoneOrEmail(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val.includes('@') && /^\d+$/.test(val)) {
+                      setPhoneOrEmail(val.slice(0, 11));
+                    } else {
+                      setPhoneOrEmail(val);
+                    }
+                  }}
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
             </div>

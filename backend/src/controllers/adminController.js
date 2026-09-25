@@ -1,9 +1,36 @@
 const prisma = require('../prisma');
 
+// Ultra-fast In-Memory cache for Admin Control Room (5s TTL)
+const adminCache = {
+  stats: null,
+  statsTime: 0,
+  deposits: {},
+  depositsTime: 0,
+  withdrawals: {},
+  withdrawalsTime: 0,
+  users: null,
+  usersTime: 0,
+  clear() {
+    this.stats = null;
+    this.statsTime = 0;
+    this.deposits = {};
+    this.depositsTime = 0;
+    this.withdrawals = {};
+    this.withdrawalsTime = 0;
+    this.users = null;
+    this.usersTime = 0;
+  }
+};
+
 // @desc Get overview statistics (Concurrent Parallel Queries)
 // @route GET /api/admin/stats
 const getAdminStats = async (req, res) => {
   try {
+    const now = Date.now();
+    if (adminCache.stats && (now - adminCache.statsTime < 4000)) {
+      return res.status(200).json({ success: true, stats: adminCache.stats });
+    }
+
     const [
       totalUsers,
       pendingDeposits,
@@ -26,16 +53,21 @@ const getAdminStats = async (req, res) => {
       })
     ]);
 
+    const statsData = {
+      totalUsers,
+      pendingDeposits,
+      pendingWithdrawals,
+      activeInvestments,
+      totalDeposited: approvedDepositsSum._sum.amount || 0,
+      totalWithdrawn: approvedWithdrawalsSum._sum.amount || 0
+    };
+
+    adminCache.stats = statsData;
+    adminCache.statsTime = Date.now();
+
     return res.status(200).json({
       success: true,
-      stats: {
-        totalUsers,
-        pendingDeposits,
-        pendingWithdrawals,
-        activeInvestments,
-        totalDeposited: approvedDepositsSum._sum.amount || 0,
-        totalWithdrawn: approvedWithdrawalsSum._sum.amount || 0
-      }
+      stats: statsData
     });
   } catch (error) {
     console.error('Admin stats error:', error);
@@ -48,6 +80,13 @@ const getAdminStats = async (req, res) => {
 const getAllDeposits = async (req, res) => {
   try {
     const { status } = req.query;
+    const cacheKey = status ? status.toUpperCase() : 'ALL';
+    const now = Date.now();
+
+    if (adminCache.deposits[cacheKey] && (now - adminCache.depositsTime < 4000)) {
+      return res.status(200).json({ success: true, deposits: adminCache.deposits[cacheKey] });
+    }
+
     const filter = status ? { status: status.toUpperCase() } : {};
 
     const deposits = await prisma.deposit.findMany({
@@ -60,6 +99,9 @@ const getAllDeposits = async (req, res) => {
       orderBy: { createdAt: 'desc' },
       take: 200
     });
+
+    adminCache.deposits[cacheKey] = deposits;
+    adminCache.depositsTime = Date.now();
 
     return res.status(200).json({ success: true, deposits });
   } catch (error) {
@@ -103,6 +145,8 @@ const approveDeposit = async (req, res) => {
       })
     ]);
 
+    adminCache.clear();
+
     return res.status(200).json({
       success: true,
       message: `Deposit of Rs. ${deposit.amount.toLocaleString()} approved! Funds credited to student wallet.`,
@@ -139,6 +183,8 @@ const rejectDeposit = async (req, res) => {
       }
     });
 
+    adminCache.clear();
+
     return res.status(200).json({
       success: true,
       message: 'Deposit request rejected.',
@@ -155,6 +201,13 @@ const rejectDeposit = async (req, res) => {
 const getAllWithdrawals = async (req, res) => {
   try {
     const { status } = req.query;
+    const cacheKey = status ? status.toUpperCase() : 'ALL';
+    const now = Date.now();
+
+    if (adminCache.withdrawals[cacheKey] && (now - adminCache.withdrawalsTime < 4000)) {
+      return res.status(200).json({ success: true, withdrawals: adminCache.withdrawals[cacheKey] });
+    }
+
     const filter = status ? { status: status.toUpperCase() } : {};
 
     const withdrawals = await prisma.withdrawal.findMany({
@@ -194,6 +247,9 @@ const getAllWithdrawals = async (req, res) => {
         userBalance: u.balance || 0
       };
     });
+
+    adminCache.withdrawals[cacheKey] = enrichedWithdrawals;
+    adminCache.withdrawalsTime = Date.now();
 
     return res.status(200).json({ success: true, withdrawals: enrichedWithdrawals });
   } catch (error) {
@@ -236,6 +292,8 @@ const approveWithdrawal = async (req, res) => {
         }
       })
     ]);
+
+    adminCache.clear();
 
     return res.status(200).json({
       success: true,
@@ -289,6 +347,8 @@ const rejectWithdrawal = async (req, res) => {
 
     const [updatedWithdrawal] = await prisma.$transaction(updates);
 
+    adminCache.clear();
+
     return res.status(200).json({
       success: true,
       message: refund
@@ -306,6 +366,11 @@ const rejectWithdrawal = async (req, res) => {
 // @route GET /api/admin/users
 const getAllUsers = async (req, res) => {
   try {
+    const now = Date.now();
+    if (adminCache.users && (now - adminCache.usersTime < 4000)) {
+      return res.status(200).json({ success: true, users: adminCache.users });
+    }
+
     const users = await prisma.user.findMany({
       where: { role: 'USER' },
       select: {
@@ -353,6 +418,9 @@ const getAllUsers = async (req, res) => {
       take: 200
     });
 
+    adminCache.users = users;
+    adminCache.usersTime = Date.now();
+
     return res.status(200).json({ success: true, users });
   } catch (error) {
     console.error('Admin get users error:', error);
@@ -397,6 +465,8 @@ const setUserReferrer = async (req, res) => {
       include: { referredBy: { select: { name: true, phone: true, referralCode: true } } }
     });
 
+    adminCache.clear();
+
     return res.status(200).json({
       success: true,
       message: `Referrer updated! Linked to ${referrer.name} (${referrer.phone})`,
@@ -439,6 +509,8 @@ const updateUserBalance = async (req, res) => {
       data: { balance: newBalance }
     });
 
+    adminCache.clear();
+
     return res.status(200).json({
       success: true,
       message: `User balance updated to Rs. ${newBalance.toLocaleString()}`,
@@ -473,6 +545,8 @@ const toggleUserRestriction = async (req, res) => {
         restrictionReason: isRestricted ? (reason || 'Account restricted due to policy violation.') : null
       }
     });
+
+    adminCache.clear();
 
     return res.status(200).json({
       success: true,
