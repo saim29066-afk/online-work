@@ -23,8 +23,21 @@ import {
 } from 'lucide-react';
 
 const ManageUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_admin_users');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem('cached_admin_users');
+    } catch {
+      return true;
+    }
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [balanceAmount, setBalanceAmount] = useState('');
@@ -51,6 +64,9 @@ const ManageUsers = () => {
       const res = await api.get('/admin/users');
       if (res.data.success) {
         setUsers(res.data.users);
+        try {
+          localStorage.setItem('cached_admin_users', JSON.stringify(res.data.users));
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -78,9 +94,13 @@ const ManageUsers = () => {
 
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
+        // Optimistic update
+        setUsers((prev) =>
+          prev.map((u) => (u.id === selectedUser.id ? { ...u, balance: res.data.balance } : u))
+        );
         setSelectedUser(null);
         setBalanceAmount('');
-        await fetchUsers();
+        fetchUsers();
       }
     } catch (err) {
       setMessage({
@@ -109,8 +129,16 @@ const ManageUsers = () => {
 
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
+        // Optimistic update
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === restrictModalUser.id
+              ? { ...u, isRestricted: newRestrictedState, restrictionReason: restrictionReason }
+              : u
+          )
+        );
         setRestrictModalUser(null);
-        await fetchUsers();
+        fetchUsers();
       }
     } catch (err) {
       setMessage({
@@ -138,7 +166,7 @@ const ManageUsers = () => {
         setMessage({ text: res.data.message, type: 'success' });
         setReferrerModalUser(null);
         setReferrerInput('');
-        await fetchUsers();
+        fetchUsers();
       }
     } catch (err) {
       setMessage({
@@ -153,15 +181,36 @@ const ManageUsers = () => {
   const handleDeleteUser = async () => {
     if (!deleteModalUser) return;
 
+    const targetUser = deleteModalUser;
     setDeleting(true);
     setMessage({ text: '', type: '' });
 
     try {
-      const res = await api.delete(`/admin/users/${deleteModalUser.id}`);
+      const res = await api.delete(`/admin/users/${targetUser.id}`);
       if (res.data.success) {
         setMessage({ text: res.data.message, type: 'success' });
+        
+        // 1. Instantly remove from local state list and counter
+        setUsers((prev) => {
+          const updated = prev.filter((u) => u.id !== targetUser.id);
+          try {
+            localStorage.setItem('cached_admin_users', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+
+        // 2. Sync admin stats cache so dashboard count updates with 0ms delay
+        try {
+          const cachedStats = localStorage.getItem('cached_admin_stats');
+          if (cachedStats) {
+            const parsed = JSON.parse(cachedStats);
+            parsed.totalUsers = res.data.totalUsers !== undefined ? res.data.totalUsers : Math.max(0, (parsed.totalUsers || 1) - 1);
+            localStorage.setItem('cached_admin_stats', JSON.stringify(parsed));
+          }
+        } catch {}
+
         setDeleteModalUser(null);
-        await fetchUsers();
+        fetchUsers();
       }
     } catch (err) {
       setMessage({

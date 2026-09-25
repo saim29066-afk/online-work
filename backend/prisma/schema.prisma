@@ -38,6 +38,11 @@ model User {
 
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+
+  @@index([role])
+  @@index([referredById])
+  @@index([createdAt])
+  @@index([isRestricted])
 }
 
 model Plan {
@@ -53,6 +58,8 @@ model Plan {
   isActive            Boolean          @default(true)
   investments         UserInvestment[]
   createdAt           DateTime         @default(now())
+
+  @@index([isActive])
 }
 
 model UserInvestment {
@@ -68,6 +75,10 @@ model UserInvestment {
   lastClaimedAt DateTime?
   status        String    @default("ACTIVE") // ACTIVE, COMPLETED
   createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Deposit {
@@ -84,6 +95,10 @@ model Deposit {
   adminNote     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Withdrawal {
@@ -98,6 +113,10 @@ model Withdrawal {
   adminNote     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ReferralEarning {
@@ -110,6 +129,10 @@ model ReferralEarning {
   planPrice       Float
   amount          Float
   createdAt       DateTime @default(now())
+
+  @@index([referrerId])
+  @@index([referredUserId])
+  @@index([createdAt])
 }
 
 model PaymentSetting {
@@ -147,4 +170,8 @@ model SupportTicket {
   status    String   @default("OPEN") // OPEN, RESOLVED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }

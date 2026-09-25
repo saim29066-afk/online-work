@@ -492,7 +492,11 @@ const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, phone: true, email: true, role: true }
+    });
+
     if (!user) {
       return res.status(404).json({ success: false, message: 'Student account not found' });
     }
@@ -504,24 +508,62 @@ const deleteUser = async (req, res) => {
       });
     }
 
-    // 1. Disconnect any students referred by this user so they don't break foreign keys
-    await prisma.user.updateMany({
-      where: { referredById: id },
-      data: { referredById: null }
+    // Atomic transaction for complete, clean cascade deletion
+    await prisma.$transaction(async (tx) => {
+      // 1. Disconnect any students referred by this user so they don't break foreign keys
+      await tx.user.updateMany({
+        where: { referredById: id },
+        data: { referredById: null }
+      });
+
+      // 2. Delete all referral commissions involving this student
+      await tx.referralEarning.deleteMany({
+        where: {
+          OR: [
+            { referrerId: id },
+            { referredUserId: id }
+          ]
+        }
+      });
+
+      // 3. Delete user investments
+      await tx.userInvestment.deleteMany({
+        where: { userId: id }
+      });
+
+      // 4. Delete user deposits
+      await tx.deposit.deleteMany({
+        where: { userId: id }
+      });
+
+      // 5. Delete user withdrawals
+      await tx.withdrawal.deleteMany({
+        where: { userId: id }
+      });
+
+      // 6. Delete user support tickets
+      await tx.supportTicket.deleteMany({
+        where: { userId: id }
+      });
+
+      // 7. Permanently delete user record
+      await tx.user.delete({
+        where: { id }
+      });
     });
 
-    // 2. Delete user
-    await prisma.user.delete({
-      where: { id }
-    });
+    // Fresh live registered student count
+    const totalUsers = await prisma.user.count({ where: { role: 'USER' } });
 
     return res.status(200).json({
       success: true,
-      message: `Student account for "${user.name}" (${user.phone}) has been permanently deleted.`
+      message: `Student account for "${user.name}" (${user.phone}) has been permanently deleted.`,
+      deletedUserId: id,
+      totalUsers
     });
   } catch (error) {
     console.error('Delete user error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to delete student account' });
+    return res.status(500).json({ success: false, message: error.message || 'Failed to delete student account' });
   }
 };
 

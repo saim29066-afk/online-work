@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const path = require('path');
 const dotenv = require('dotenv');
 
@@ -13,6 +14,9 @@ app.set('trust proxy', 1);
 
 // Security: Disable X-Powered-By header
 app.disable('x-powered-by');
+
+// 0. High-performance Gzip/Brotli compression for all JSON and static assets
+app.use(compression());
 
 // 1. CORS first before any other middleware or routes
 app.use(cors({
