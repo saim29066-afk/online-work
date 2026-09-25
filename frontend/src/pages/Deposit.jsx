@@ -16,6 +16,7 @@ import {
   Smartphone,
   ShieldCheck,
   History,
+  MessageSquare,
   X
 } from 'lucide-react';
 
