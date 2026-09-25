@@ -33,6 +33,8 @@ const Navbar = () => {
   };
 
   const isActive = (path) => location.pathname === path;
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/admin/login';
+  const showAuth = isAuthenticated && !!user && !isAuthPage;
 
   return (
     <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -40,7 +42,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-14">
           {/* Brand Logo */}
           <Link
-            to={isAuthenticated ? (isAdmin ? '/admin' : '/dashboard') : '/'}
+            to={showAuth ? (isAdmin ? '/admin' : '/dashboard') : '/'}
             className="flex items-center gap-2 group"
           >
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform ${
@@ -68,7 +70,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-1 text-xs">
-            {isAuthenticated ? (
+            {showAuth ? (
               isAdmin ? (
                 /* Admin-Only Dedicated Nav Items (No student deposit/withdraw options) */
                 <>
@@ -240,7 +242,7 @@ const Navbar = () => {
 
           {/* Right Action buttons */}
           <div className="flex items-center gap-2">
-            {isAuthenticated && user ? (
+            {showAuth ? (
               <div className="flex items-center gap-2">
                 {isAdmin ? (
                   /* Admin Role Badge (No student wallet balance) */
@@ -308,7 +310,7 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Drawer Dropdown */}
-      {mobileMenuOpen && isAuthenticated && (
+      {mobileMenuOpen && showAuth && (
         <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-2 text-xs shadow-md">
           {isAdmin ? (
             /* Admin Mobile Drawer */

@@ -19,15 +19,27 @@ import {
   X
 } from 'lucide-react';
 
+const DEFAULT_PAYMENT_SETTINGS = {
+  upaisaNumber: '03123456789',
+  upaisaTitle: 'Student Invest Official',
+  upaisaStatus: 'ACTIVE',
+  jazzcashNumber: '03011234567',
+  jazzcashTitle: 'Student Invest Official',
+  jazzcashStatus: 'ACTIVE',
+  easypaisaNumber: '03001234567',
+  easypaisaTitle: 'Student Invest Official',
+  easypaisaStatus: 'ACTIVE'
+};
+
 const Deposit = () => {
   const { user, refreshUser } = useAuth();
   const [gateway, setGateway] = useState('UPAISA');
   const [settings, setSettings] = useState(() => {
     try {
       const cached = localStorage.getItem('cached_payment_settings');
-      return cached ? JSON.parse(cached) : null;
+      return cached ? JSON.parse(cached) : DEFAULT_PAYMENT_SETTINGS;
     } catch {
-      return null;
+      return DEFAULT_PAYMENT_SETTINGS;
     }
   });
   const [amount, setAmount] = useState('');

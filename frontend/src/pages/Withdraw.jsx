@@ -63,6 +63,14 @@ const Withdraw = () => {
   const [feedback, setFeedback] = useState({ text: '', type: '' });
   const [inviteModal, setInviteModal] = useState({ open: false, message: '' });
   const [planRequiredModal, setPlanRequiredModal] = useState({ open: false, message: '' });
+  const [successModal, setSuccessModal] = useState({
+    open: false,
+    amount: 0,
+    gateway: '',
+    accountNumber: '',
+    accountTitle: '',
+    message: ''
+  });
 
   const currentBalance = user?.balance || 0;
   const referralCode = user?.referralCode || '';
@@ -170,7 +178,14 @@ const Withdraw = () => {
       });
 
       if (res.data.success) {
-        setFeedback({ text: res.data.message, type: 'success' });
+        setSuccessModal({
+          open: true,
+          amount: numAmount,
+          gateway,
+          accountNumber: cleanNumber,
+          accountTitle: accountTitle.trim(),
+          message: res.data.message || 'Withdrawal request submitted successfully!'
+        });
         setAccountNumber('');
         setAccountTitle('');
         await refreshUser();
@@ -544,6 +559,76 @@ const Withdraw = () => {
               >
                 Go to Invite Page
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdrawal Request Done / Success Modal Popup */}
+      {successModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border-2 border-emerald-400 rounded-3xl max-w-md w-full p-6 shadow-2xl relative text-xs space-y-4">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-300 text-emerald-700 flex items-center justify-center mx-auto shadow-md animate-bounce">
+                <CheckCircle2 className="w-9 h-9 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-black text-slate-900">
+                Withdrawal Request Submitted!
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                {successModal.message || 'Your cashout request has been submitted to administration. Payout will be transferred to your account within 15-30 minutes.'}
+              </p>
+            </div>
+
+            {/* Transaction Receipt Card */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Requested Amount:</span>
+                <span className="text-base font-black text-emerald-700">Rs. {Number(successModal.amount).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Receiving Wallet:</span>
+                <span className="font-bold text-slate-800">{successModal.gateway}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Account Number:</span>
+                <span className="font-mono font-bold text-slate-900">{successModal.accountNumber}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Account Title:</span>
+                <span className="font-bold text-slate-900">{successModal.accountTitle}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs border-t border-slate-200 pt-2">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Status:</span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-black text-[10px] uppercase border border-amber-300 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                  Pending Review
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessModal({ open: false, amount: 0, gateway: '', accountNumber: '', accountTitle: '', message: '' });
+                  navigate('/withdraw-history');
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-xs sm:text-sm text-center transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <History className="w-4 h-4" />
+                <span>View Withdrawal History & Status</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessModal({ open: false, amount: 0, gateway: '', accountNumber: '', accountTitle: '', message: '' });
+                  navigate('/dashboard');
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs text-center transition-colors"
+              >
+                Back to Dashboard
+              </button>
             </div>
           </div>
         </div>
