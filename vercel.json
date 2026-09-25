@@ -1,6 +1,11 @@
 {
   "buildCommand": "npx prisma generate --schema=backend/prisma/schema.prisma && cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "backend/**"
+    }
+  },
   "headers": [
     {
       "source": "/assets/(.*)",
