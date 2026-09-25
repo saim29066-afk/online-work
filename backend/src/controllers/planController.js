@@ -84,7 +84,7 @@ const buyPlan = async (req, res) => {
       return res.status(400).json({
         success: false,
         alreadyActive: true,
-        message: `Aapka "${plan.name}" pehle se ACTIVE hai! Yeh plan ${remainingDays} din baad khatam hone par hi dobara buy kiya ja sakta hai.`
+        message: `Your "${plan.name}" is already ACTIVE! You can re-activate this plan after ${remainingDays} days when the current term completes.`
       });
     }
 
@@ -117,7 +117,7 @@ const buyPlan = async (req, res) => {
         }
       });
       if (existingInTx) {
-        throw new Error(`Aapka "${plan.name}" pehle se ACTIVE hai! Yeh plan khatam hone par hi dobara buy kiya ja sakta hai.`);
+        throw new Error(`Your "${plan.name}" is already ACTIVE! You can purchase it again after the current term completes.`);
       }
 
       // 1. Deduct balance from buyer (if paid plan)
@@ -351,6 +351,18 @@ const claimDailyProfit = async (req, res) => {
       select: { balance: true, totalEarned: true }
     });
 
+    return res.status(200).json({
+      success: true,
+      message: `Rs. ${totalClaimedToday.toLocaleString()} daily bonus collected successfully! Added to your wallet.`,
+      claimedAmount: totalClaimedToday,
+      newBalance: updatedUser.balance
+    });
+  } catch (error) {
+    console.error('Claim daily profit error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to claim daily bonus' });
+  }
+};
+
 // @desc Claim daily bonus for a SINGLE specific investment plan
 // @route POST /api/plans/claim-daily/:id
 const claimIndividualPlanProfit = async (req, res) => {
@@ -385,7 +397,7 @@ const claimIndividualPlanProfit = async (req, res) => {
         const remainingHours = Math.ceil(24 - diffHours);
         return res.status(400).json({
           success: false,
-          message: `Aapne is plan ka daily bonus aaj pehle hi collect kar liya hai! Agla bonus ${remainingHours} ghante baad unlock hoga.`
+          message: `You have already collected today's daily bonus for this plan! Next bonus will unlock in ${remainingHours} hours.`
         });
       }
     }

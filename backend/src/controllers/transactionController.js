@@ -353,7 +353,7 @@ const submitWithdrawal = async (req, res) => {
       return res.status(400).json({
         success: false,
         requiresPlan: true,
-        message: 'Plan Required: Deposited balance ya profits withdraw karne se pehle kam az kam 1 Student Investment Plan activate karna lazmi hai.'
+        message: 'Plan Required: You must activate at least 1 Student Investment Plan before requesting a cashout.'
       });
     }
 
