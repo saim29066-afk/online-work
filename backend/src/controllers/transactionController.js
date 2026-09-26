@@ -64,7 +64,22 @@ const submitDeposit = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Minimum deposit amount is Rs. 100' });
     }
 
-    const settings = await prisma.paymentSetting.findFirst();
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload the payment transaction screenshot / slip.'
+      });
+    }
+
+    // Parallel checks for maximum speed
+    const [settings, existingTid] = await Promise.all([
+      prisma.paymentSetting.findFirst(),
+      prisma.deposit.findFirst({
+        where: { transactionId: transactionId.trim() },
+        select: { id: true }
+      })
+    ]);
+
     const gw = gateway.toUpperCase();
     if (gw === 'EASYPAISA' && settings?.easypaisaStatus && settings.easypaisaStatus !== 'ACTIVE') {
       return res.status(400).json({
@@ -84,18 +99,6 @@ const submitDeposit = async (req, res) => {
         message: settings.upaisaNotice || 'UPaisa is currently under maintenance / coming soon. Please use another gateway.'
       });
     }
-
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload the payment transaction screenshot / slip.'
-      });
-    }
-
-    // Check duplicate TID
-    const existingTid = await prisma.deposit.findFirst({
-      where: { transactionId: transactionId.trim() }
-    });
 
     if (existingTid) {
       return res.status(400).json({
@@ -336,11 +339,7 @@ const submitWithdrawal = async (req, res) => {
     }
 
     // Check if user has activated at least 1 investment plan before requesting a withdrawal
-    const totalUserInvestmentsCount = await prisma.userInvestment.count({
-      where: { userId }
-    });
-
-    if (totalUserInvestmentsCount === 0) {
+    if (!user.investments || user.investments.length === 0) {
       return res.status(400).json({
         success: false,
         requiresPlan: true,
@@ -394,16 +393,15 @@ const submitWithdrawal = async (req, res) => {
       });
     }
 
-    // 4. Deduct balance & create pending withdrawal
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedUser = await tx.user.update({
+    // 4. Deduct balance & create pending withdrawal in single batched roundtrip
+    const [updatedUser, withdrawal] = await prisma.$transaction([
+      prisma.user.update({
         where: { id: userId },
         data: {
           balance: { decrement: numAmount }
         }
-      });
-
-      const withdrawal = await tx.withdrawal.create({
+      }),
+      prisma.withdrawal.create({
         data: {
           userId,
           gateway: gateway.toUpperCase(),
@@ -412,16 +410,14 @@ const submitWithdrawal = async (req, res) => {
           accountTitle: accountTitle.trim(),
           status: 'PENDING'
         }
-      });
-
-      return { updatedUser, withdrawal };
-    });
+      })
+    ]);
 
     return res.status(201).json({
       success: true,
       message: `Withdrawal request for Rs. ${numAmount.toLocaleString()} submitted! Funds will be transferred to your ${gateway} account shortly.`,
-      newBalance: result.updatedUser.balance,
-      withdrawal: result.withdrawal
+      newBalance: updatedUser.balance,
+      withdrawal
     });
   } catch (error) {
     console.error('Withdrawal submission error:', error);

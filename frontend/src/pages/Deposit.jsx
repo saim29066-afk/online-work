@@ -127,7 +127,7 @@ const Deposit = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const maxDim = 900;
+          const maxDim = 680;
 
           if (width > maxDim || height > maxDim) {
             if (width > height) {
@@ -157,7 +157,7 @@ const Deposit = () => {
               }
             },
             'image/jpeg',
-            0.75
+            0.58
           );
         };
         img.onerror = () => resolve(file);
