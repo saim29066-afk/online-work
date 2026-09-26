@@ -24,10 +24,10 @@ import PageHeader from '../components/PageHeader';
 
 const TIERS = [
   { amount: 500, label: 'Starter 1st Cashout', requiredInvites: 0, desc: '1-time trial cashout (0 Invites)' },
-  { amount: 2000, label: 'Standard Cashout', requiredInvites: 1, desc: 'Requires 1 active friend' },
-  { amount: 4000, label: 'Silver Cashout', requiredInvites: 2, desc: 'Requires 2 active friends' },
-  { amount: 8000, label: 'Gold Cashout', requiredInvites: 4, desc: 'Requires 4 active friends' },
-  { amount: 16000, label: 'Diamond Cashout', requiredInvites: 8, desc: 'Requires 8 active friends' }
+  { amount: 2000, label: 'Standard Tier', requiredInvites: 1, desc: 'Requires 1 active friend (1 invite per cashout)' },
+  { amount: 4000, label: 'Silver Tier', requiredInvites: 1, desc: 'Requires 1 active friend (1 invite per cashout)' },
+  { amount: 8000, label: 'Gold Tier', requiredInvites: 1, desc: 'Requires 1 active friend (1 invite per cashout)' },
+  { amount: 16000, label: 'Diamond Tier', requiredInvites: 1, desc: 'Requires 1 active friend (1 invite per cashout)' }
 ];
 
 const Withdraw = () => {
@@ -314,9 +314,6 @@ const Withdraw = () => {
                 } else if (isHigherLockedBefore500) {
                   badgeText = 'LOCKED';
                   badgeClass = 'bg-slate-200 text-slate-500';
-                } else if (tier.isFreeBonus && hasEnoughInvites) {
-                  badgeText = '🎁 FREE CASHOUT';
-                  badgeClass = 'bg-emerald-600 text-white animate-pulse';
                 } else if (tier.requiredInvites > 0 && !hasEnoughInvites) {
                   const needed = tier.requiredInvites - tierInfo.qualifiedReferralsCount;
                   badgeText = `NEED ${needed} FRIEND${needed > 1 ? 'S' : ''}`;
@@ -363,7 +360,7 @@ const Withdraw = () => {
             <div className="mt-2 p-2 rounded-lg bg-emerald-50/60 border border-emerald-100 text-[10px] text-emerald-800 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>
-                <strong>1 Friend = 2 Cashouts</strong>: Each active friend you invite unlocks 2 cashouts (1 cashout + 1 additional free cashout before the next invite).
+                <strong>1 Invite Per Cashout</strong>: Har 2,000, 4,000, 8,000 aur 16,000 cashout ke baad 1 active friend invite karna zaroori hai.
               </span>
             </div>
           </div>

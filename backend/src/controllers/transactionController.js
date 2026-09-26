@@ -177,17 +177,20 @@ const getWithdrawalTierStatus = async (req, res) => {
     }
 
     const pastCount = user.withdrawals.length;
+    const paidWithdrawalsCount = user.withdrawals.filter(w => w.amount > 500).length;
     const qualifiedReferralsCount = user.referrals.filter(
       r => (r.investments && r.investments.length > 0) || (r.deposits && r.deposits.length > 0)
     ).length;
     const hasPaidPlan = user.investments.some(inv => inv.amount >= 1000);
 
+    const requiredInvitesForNext = paidWithdrawalsCount + 1;
+
     const baseTiers = [
-      { amount: 500, baseInvites: 0, label: 'Starter 1st Cashout' },
-      { amount: 2000, baseInvites: 1, label: 'Standard Tier' },
-      { amount: 4000, baseInvites: 2, label: 'Silver Tier' },
-      { amount: 8000, baseInvites: 4, label: 'Gold Tier' },
-      { amount: 16000, baseInvites: 8, label: 'Diamond Tier' }
+      { amount: 500, label: 'Starter 1st Cashout' },
+      { amount: 2000, label: 'Standard Tier' },
+      { amount: 4000, label: 'Silver Tier' },
+      { amount: 8000, label: 'Gold Tier' },
+      { amount: 16000, label: 'Diamond Tier' }
     ];
 
     const tiers = baseTiers.map((t) => {
@@ -197,27 +200,18 @@ const getWithdrawalTierStatus = async (req, res) => {
           requiredInvites: 0,
           baseInvites: 0,
           tierCount: user.withdrawals.filter(w => w.amount === 500).length,
-          isFreeBonus: false,
           label: 'Starter 1st Cashout',
           desc: '1-time trial cashout (0 Invites)'
         };
       }
 
-      const tierCount = user.withdrawals.filter(w => w.amount === t.amount).length;
-      const batchNumber = Math.floor(tierCount / 2) + 1;
-      const requiredInvites = batchNumber * t.baseInvites;
-      const isFreeBonus = tierCount % 2 === 1;
-
       return {
         amount: t.amount,
-        baseInvites: t.baseInvites,
-        requiredInvites,
-        tierCount,
-        isFreeBonus,
+        baseInvites: 1,
+        requiredInvites: requiredInvitesForNext,
+        tierCount: user.withdrawals.filter(w => w.amount === t.amount).length,
         label: t.label,
-        desc: isFreeBonus
-          ? `🎁 FREE Bonus Cashout (2nd cashout from previous invite)`
-          : `Requires ${requiredInvites} active friend${requiredInvites > 1 ? 's' : ''} (Includes 1 free bonus cashout)`
+        desc: `Requires ${requiredInvitesForNext} active friend${requiredInvitesForNext > 1 ? 's' : ''} (1 invite per cashout)`
       };
     });
 
@@ -273,15 +267,9 @@ const submitWithdrawal = async (req, res) => {
     }
 
     const numAmount = parseInt(amount, 10);
-    const BASE_INVITES_PER_TIER = {
-      500: 0,
-      2000: 1,
-      4000: 2,
-      8000: 4,
-      16000: 8
-    };
+    const ALLOWED_AMOUNTS = [500, 2000, 4000, 8000, 16000];
 
-    if (BASE_INVITES_PER_TIER[numAmount] === undefined) {
+    if (!ALLOWED_AMOUNTS.includes(numAmount)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid withdrawal amount selected. Allowed tiers are Rs. 500, 2,000, 4,000, 8,000, and 16,000.'
@@ -364,14 +352,14 @@ const submitWithdrawal = async (req, res) => {
       });
     }
 
-    const tierWithdrawalsCount = user.withdrawals.filter(w => w.amount === numAmount).length;
+    const pastWithdrawalsCount = user.withdrawals.length;
+    const paidWithdrawalsCount = user.withdrawals.filter(w => w.amount > 500).length;
+
     let requiredInvites = 0;
     if (numAmount === 500) {
       requiredInvites = 0;
     } else {
-      const base = BASE_INVITES_PER_TIER[numAmount];
-      const batchNumber = Math.floor(tierWithdrawalsCount / 2) + 1;
-      requiredInvites = batchNumber * base;
+      requiredInvites = paidWithdrawalsCount + 1;
     }
 
     const qualifiedReferralsCount = user.referrals.filter(
@@ -387,8 +375,8 @@ const submitWithdrawal = async (req, res) => {
         currentInvites: qualifiedReferralsCount,
         neededMore,
         pastWithdrawalsCount,
-        tierWithdrawalsCount,
-        message: `Withdrawal Locked! For Rs. ${numAmount.toLocaleString()} cashout #${tierWithdrawalsCount + 1}, at least ${requiredInvites} active invited friends are required (${neededMore} more required). Note: Each active friend allows 2 cashouts (1 free bonus cashout included).`
+        paidWithdrawalsCount,
+        message: `Withdrawal Locked! For Rs. ${numAmount.toLocaleString()} cashout #${paidWithdrawalsCount + 1}, at least ${requiredInvites} active invited friend${requiredInvites > 1 ? 's are' : ' is'} required (${neededMore} more required). Note: Each withdrawal of Rs. 2,000+ requires 1 active invited friend.`
       });
     }
 
