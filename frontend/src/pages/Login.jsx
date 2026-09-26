@@ -14,9 +14,9 @@ const Login = () => {
   const sanitizePhone = (val) => {
     if (!val) return '';
     let digits = String(val).trim().replace(/\D/g, '');
-    if (digits.startsWith('0092')) {
+    if (digits.startsWith('0092') && digits.length >= 13) {
       digits = '0' + digits.slice(4);
-    } else if (digits.startsWith('92') && digits.length >= 11) {
+    } else if (digits.startsWith('92') && digits.length >= 12) {
       digits = '0' + digits.slice(2);
     } else if (digits.length === 10 && digits.startsWith('3')) {
       digits = '0' + digits;
@@ -39,7 +39,7 @@ const Login = () => {
     setError('');
 
     try {
-      const data = await login(identifier, password);
+      const data = await login(identifier, password.trim());
       if (data.success) {
         if (data.user.role === 'ADMIN') {
           navigate('/admin');
@@ -75,7 +75,7 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
             <div>
               <label className="block font-semibold text-slate-700 mb-1.5">
-                Mobile Number (11 Digits)
+                Mobile Number (11 Digits) or Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -84,17 +84,10 @@ const Login = () => {
                 <input
                   type="text"
                   required
-                  maxLength={phoneOrEmail.includes('@') ? 80 : 11}
+                  maxLength={80}
                   placeholder="03XXXXXXXXX (11 digits) or Email"
                   value={phoneOrEmail}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val.includes('@') && /^\d+$/.test(val)) {
-                      setPhoneOrEmail(val.slice(0, 11));
-                    } else {
-                      setPhoneOrEmail(val);
-                    }
-                  }}
+                  onChange={(e) => setPhoneOrEmail(e.target.value)}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>

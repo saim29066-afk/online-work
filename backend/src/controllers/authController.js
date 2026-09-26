@@ -22,9 +22,9 @@ const fastReferralCode = () => {
 const sanitizePhone = (raw) => {
   if (!raw) return '';
   let digits = String(raw).trim().replace(/\D/g, '');
-  if (digits.startsWith('0092')) {
+  if (digits.startsWith('0092') && digits.length >= 13) {
     digits = '0' + digits.slice(4);
-  } else if (digits.startsWith('92') && digits.length >= 11) {
+  } else if (digits.startsWith('92') && digits.length >= 12) {
     digits = '0' + digits.slice(2);
   } else if (digits.length === 10 && digits.startsWith('3')) {
     digits = '0' + digits;
@@ -46,11 +46,11 @@ const register = async (req, res) => {
     if (cleanPhone.length !== 11 || !cleanPhone.startsWith('03')) {
       return res.status(400).json({
         success: false,
-        message: 'Please enter a valid Pakistani mobile number (e.g. 03001234567)'
+        message: 'Please enter a valid 11-digit Pakistani mobile number (e.g. 03001234567)'
       });
     }
 
-    if (String(password).length < 4) {
+    if (String(password).trim().length < 4) {
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 4 characters long'
@@ -80,7 +80,7 @@ const register = async (req, res) => {
         prisma.user.findFirst({
           where: {
             OR: [
-              { referralCode: rawRef.toUpperCase() },
+              { referralCode: { equals: rawRef, mode: 'insensitive' } },
               ...(cleanRefPhone.length === 11 ? [{ phone: cleanRefPhone }] : [])
             ]
           },
@@ -93,7 +93,7 @@ const register = async (req, res) => {
 
     // Run hashing and DB existence checks simultaneously
     const [hashingResult, dbChecks] = await Promise.all([
-      bcrypt.hash(password, 8),
+      bcrypt.hash(String(password).trim(), 8),
       Promise.all(checkPromises)
     ]);
 
@@ -155,17 +155,29 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter your mobile number and password' });
     }
 
-    const cleanInput = phoneOrEmail.trim();
+    const cleanInput = String(phoneOrEmail).trim();
     const cleanPhone = sanitizePhone(cleanInput);
+
+    const searchConditions = [
+      { email: { equals: cleanInput, mode: 'insensitive' } },
+      { phone: cleanInput }
+    ];
+
+    if (cleanPhone) {
+      searchConditions.push({ phone: cleanPhone });
+      if (cleanPhone.startsWith('0')) {
+        searchConditions.push({ phone: cleanPhone.slice(1) });
+        searchConditions.push({ phone: '92' + cleanPhone.slice(1) });
+      }
+    }
+
+    if (cleanInput.toLowerCase() === 'admin') {
+      searchConditions.push({ email: 'admin@studentinvest.pk' });
+    }
 
     const user = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email: cleanInput.toLowerCase() },
-          ...(cleanPhone ? [{ phone: cleanPhone }] : []),
-          { phone: cleanInput },
-          ...(cleanInput.toLowerCase() === 'admin' ? [{ email: 'admin@studentinvest.pk' }] : [])
-        ]
+        OR: searchConditions
       },
       select: {
         id: true,
@@ -185,12 +197,15 @@ const login = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Account not found. Please check your mobile number or register.' });
+      return res.status(401).json({ success: false, message: 'Account not found. Please check your mobile number or create a new account.' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const trimmedPw = String(password).trim();
+    const isMatch = (await bcrypt.compare(String(password), user.password)) || 
+                    (await bcrypt.compare(trimmedPw, user.password));
+
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid password. Please try again.' });
+      return res.status(401).json({ success: false, message: 'Invalid password. Please check your password and try again.' });
     }
 
     const token = generateToken(user.id);

@@ -33,9 +33,9 @@ const Register = () => {
   const sanitizePhone = (val) => {
     if (!val) return '';
     let digits = String(val).trim().replace(/\D/g, '');
-    if (digits.startsWith('0092')) {
+    if (digits.startsWith('0092') && digits.length >= 13) {
       digits = '0' + digits.slice(4);
-    } else if (digits.startsWith('92') && digits.length >= 11) {
+    } else if (digits.startsWith('92') && digits.length >= 12) {
       digits = '0' + digits.slice(2);
     } else if (digits.length === 10 && digits.startsWith('3')) {
       digits = '0' + digits;
@@ -56,7 +56,7 @@ const Register = () => {
       return;
     }
 
-    if (password.length < 4) {
+    if (String(password).trim().length < 4) {
       setError('Password must be at least 4 characters long.');
       return;
     }
@@ -69,7 +69,7 @@ const Register = () => {
         name: name.trim(),
         phone: cleanPhone,
         email: email ? email.trim() : '',
-        password,
+        password: String(password).trim(),
         referralCode: referralCode.trim()
       });
 
@@ -144,10 +144,13 @@ const Register = () => {
                 <input
                   type="tel"
                   required
-                  maxLength={11}
+                  maxLength={13}
                   placeholder="03XXXXXXXXX (11 digits)"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^\d+]/g, '');
+                    setPhone(raw);
+                  }}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
