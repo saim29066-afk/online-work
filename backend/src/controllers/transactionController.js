@@ -186,11 +186,11 @@ const getWithdrawalTierStatus = async (req, res) => {
     const requiredInvitesForNext = paidWithdrawalsCount + 1;
 
     const baseTiers = [
-      { amount: 500, label: 'Starter 1st Cashout' },
-      { amount: 2000, label: 'Standard Tier' },
-      { amount: 4000, label: 'Silver Tier' },
-      { amount: 8000, label: 'Gold Tier' },
-      { amount: 16000, label: 'Diamond Tier' }
+      { amount: 500, label: 'Starter 1st Cashout', baseInvites: 0, desc: '1-time trial cashout (0 Invites)' },
+      { amount: 2000, label: 'Standard Tier', baseInvites: 1, desc: 'Requires 1 active friend per cashout' },
+      { amount: 4000, label: 'Silver Tier', baseInvites: 2, desc: 'Requires 2 active friends per cashout' },
+      { amount: 8000, label: 'Gold Tier', baseInvites: 2, desc: 'Requires 2 active friends per cashout' },
+      { amount: 16000, label: 'Diamond Tier', baseInvites: 2, desc: 'Requires 2 active friends per cashout' }
     ];
 
     const tiers = baseTiers.map((t) => {
@@ -205,13 +205,16 @@ const getWithdrawalTierStatus = async (req, res) => {
         };
       }
 
+      const tierCount = user.withdrawals.filter(w => w.amount === t.amount).length;
+      const requiredInvites = (tierCount + 1) * t.baseInvites;
+
       return {
         amount: t.amount,
-        baseInvites: 1,
-        requiredInvites: requiredInvitesForNext,
-        tierCount: user.withdrawals.filter(w => w.amount === t.amount).length,
+        baseInvites: t.baseInvites,
+        requiredInvites,
+        tierCount,
         label: t.label,
-        desc: `Requires ${requiredInvitesForNext} active friend${requiredInvitesForNext > 1 ? 's' : ''} (1 invite per cashout)`
+        desc: `Requires ${requiredInvites} active friend${requiredInvites > 1 ? 's' : ''}`
       };
     });
 
@@ -352,13 +355,15 @@ const submitWithdrawal = async (req, res) => {
       });
     }
 
-    const paidWithdrawalsCount = user.withdrawals.filter(w => w.amount > 500).length;
-
+    const tierWithdrawalsCount = user.withdrawals.filter(w => w.amount === numAmount).length;
     let requiredInvites = 0;
     if (numAmount === 500) {
       requiredInvites = 0;
+    } else if (numAmount === 2000) {
+      requiredInvites = (tierWithdrawalsCount + 1) * 1;
     } else {
-      requiredInvites = paidWithdrawalsCount + 1;
+      // 4000, 8000, 16000 require 2 invites per cashout
+      requiredInvites = (tierWithdrawalsCount + 1) * 2;
     }
 
     const qualifiedReferralsCount = user.referrals.filter(
@@ -374,8 +379,8 @@ const submitWithdrawal = async (req, res) => {
         currentInvites: qualifiedReferralsCount,
         neededMore,
         pastWithdrawalsCount,
-        paidWithdrawalsCount,
-        message: `Withdrawal Locked! For Rs. ${numAmount.toLocaleString()} cashout #${paidWithdrawalsCount + 1}, at least ${requiredInvites} active invited friend${requiredInvites > 1 ? 's are' : ' is'} required (${neededMore} more required). Note: Each withdrawal of Rs. 2,000+ requires 1 active invited friend.`
+        tierWithdrawalsCount,
+        message: `Withdrawal Locked! For Rs. ${numAmount.toLocaleString()} cashout #${tierWithdrawalsCount + 1}, at least ${requiredInvites} active invited friend${requiredInvites > 1 ? 's are' : ' is'} required (${neededMore} more required).`
       });
     }
 
