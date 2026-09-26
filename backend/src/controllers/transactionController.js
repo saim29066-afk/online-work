@@ -352,7 +352,6 @@ const submitWithdrawal = async (req, res) => {
       });
     }
 
-    const pastWithdrawalsCount = user.withdrawals.length;
     const paidWithdrawalsCount = user.withdrawals.filter(w => w.amount > 500).length;
 
     let requiredInvites = 0;
