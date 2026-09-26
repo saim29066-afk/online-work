@@ -75,7 +75,7 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
             <div>
               <label className="block font-semibold text-slate-700 mb-1.5">
-                Mobile Number (11 Digits) or Email
+                Mobile Number (11 Digits)
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -84,10 +84,17 @@ const Login = () => {
                 <input
                   type="text"
                   required
-                  maxLength={80}
-                  placeholder="03XXXXXXXXX (11 digits) or Email"
+                  maxLength={phoneOrEmail.includes('@') ? 80 : 11}
+                  placeholder="03XXXXXXXXX (11 digits)"
                   value={phoneOrEmail}
-                  onChange={(e) => setPhoneOrEmail(e.target.value)}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw.includes('@')) {
+                      setPhoneOrEmail(raw.slice(0, 80));
+                    } else {
+                      setPhoneOrEmail(raw.replace(/\D/g, '').slice(0, 11));
+                    }
+                  }}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>

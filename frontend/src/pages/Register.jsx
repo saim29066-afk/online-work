@@ -144,11 +144,11 @@ const Register = () => {
                 <input
                   type="tel"
                   required
-                  maxLength={13}
+                  maxLength={11}
                   placeholder="03XXXXXXXXX (11 digits)"
                   value={phone}
                   onChange={(e) => {
-                    const raw = e.target.value.replace(/[^\d+]/g, '');
+                    const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
                     setPhone(raw);
                   }}
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
